@@ -1,5 +1,9 @@
 # Changelog
 
+0.0.3 - (6-26-26)
+---
+- Updates to `e2e-test.sh`
+
 0.0.2 - (6-26-26)
 ---
 - Quick updates to `README.md`
