@@ -1,0 +1,42 @@
+# Parent Gateway + parent HTTPRoute that delegate /registry to the child
+# HTTPRoutes agentregistry creates in its install namespace.
+#
+# The `agentregistry.solo.io/runtime` label binds these Kubernetes resources
+# to an agentregistry `Virtual` runtime. Used by labs/mcp/solo-docs-mcp.md.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: mcp-gateway
+  namespace: agentgateway-system
+  labels:
+    agentregistry.solo.io/runtime: virtual-default
+spec:
+  gatewayClassName: enterprise-agentgateway
+  listeners:
+    - protocol: HTTP
+      port: 80
+      name: http
+      allowedRoutes:
+        namespaces:
+          from: All
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: remote-mcp-delegate
+  namespace: agentgateway-system
+  labels:
+    agentregistry.solo.io/runtime: virtual-default
+spec:
+  parentRefs:
+    - name: mcp-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /registry
+      backendRefs:
+        - group: gateway.networking.k8s.io
+          kind: HTTPRoute
+          name: "*"
+          namespace: agentregistry-system

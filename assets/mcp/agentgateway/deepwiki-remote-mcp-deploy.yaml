@@ -1,0 +1,17 @@
+# Deploy the DeepWiki remote MCP to the Virtual runtime. Exposed at
+# /registry/deepwiki under the parent route's /registry prefix.
+apiVersion: ar.dev/v1alpha1
+kind: Deployment
+metadata:
+  name: deepwiki-remote-mcp-agw
+spec:
+  targetRef:
+    kind: MCPServer
+    name: deepwiki-remote-mcp
+    tag: latest
+  runtimeRef:
+    kind: Runtime
+    name: virtual-default
+  runtimeConfig:
+    route:
+      pathSuffix: /deepwiki

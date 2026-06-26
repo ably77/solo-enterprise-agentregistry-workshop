@@ -1,0 +1,22 @@
+# Catalog entry for the in-cluster arXiv MCP server.
+#
+# The upstream is the in-cluster Service from arxiv-deployment.yaml, reached at
+# its cluster-DNS name. No envsubst, no token:
+#
+#   arctl apply -f assets/mcp/in-cluster/arxiv-mcp.yaml
+#
+# This is the key difference from the Solo Docs / DeepWiki remote labs: the
+# `remote.url` points at an in-cluster Service (http://<svc>.<ns>.svc.cluster.local)
+# instead of a public internet URL. Everything downstream (Virtual runtime,
+# gateway route) is identical.
+apiVersion: ar.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: arxiv-incluster-mcp
+  tag: latest
+spec:
+  title: arXiv MCP (in-cluster)
+  description: arXiv academic paper search, self-hosted in-cluster and registered by Service URL
+  remote:
+    type: streamable-http
+    url: http://mcp-airxiv.mcp.svc.cluster.local:80/mcp

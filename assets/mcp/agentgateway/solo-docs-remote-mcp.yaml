@@ -1,0 +1,21 @@
+# Remote streamable-HTTP MCP catalog entry for the public Solo.io Docs MCP.
+#
+# This upstream is PUBLIC - it needs no auth header - so you can apply it
+# directly with no envsubst / token:
+#
+#   arctl apply -f assets/mcp/agentgateway/solo-docs-remote-mcp.yaml
+#
+# The server exposes three tools: `search` (search Solo.io product docs),
+# `get_chunks` (retrieve sequential segments of a document), and
+# `get_full_page` (fetch a full doc page).
+apiVersion: ar.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: solo-docs-remote-mcp
+  tag: latest
+spec:
+  title: Solo.io Docs Remote MCP
+  description: Solo.io documentation search MCP (search.solo.io) exposed through Agentgateway
+  remote:
+    type: streamable-http
+    url: https://search.solo.io/mcp

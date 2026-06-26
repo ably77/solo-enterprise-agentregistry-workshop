@@ -1,0 +1,13 @@
+[theme]
+base = "dark"
+primaryColor = "#1dc98a"
+backgroundColor = "#090c14"
+secondaryBackgroundColor = "#0f1420"
+textColor = "#dde3f0"
+
+[server]
+headless = true
+
+[client]
+# Hide the Deploy button and the ⋮ developer menu in the top-right.
+toolbarMode = "minimal"

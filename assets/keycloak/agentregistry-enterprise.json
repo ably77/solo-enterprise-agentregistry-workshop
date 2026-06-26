@@ -1,0 +1,103 @@
+{
+  "realm": "agentregistry-enterprise",
+  "enabled": true,
+  "sslRequired": "none",
+  "loginWithEmailAllowed": true,
+  "groups": [
+    { "id": "00000000-0000-0000-0000-00000000a001", "name": "are-admins" },
+    { "id": "00000000-0000-0000-0000-00000000a002", "name": "are-readers" },
+    { "id": "00000000-0000-0000-0000-00000000a003", "name": "are-writers" }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin@example.com",
+      "firstName": "admin",
+      "lastName": "user",
+      "credentials": [
+        { "type": "password", "value": "admin", "temporary": false }
+      ],
+      "groups": ["/are-admins"]
+    },
+    {
+      "username": "reader",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "reader@example.com",
+      "firstName": "reader",
+      "lastName": "user",
+      "credentials": [
+        { "type": "password", "value": "reader", "temporary": false }
+      ],
+      "groups": ["/are-readers"]
+    },
+    {
+      "username": "writer",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "writer@example.com",
+      "firstName": "writer",
+      "lastName": "user",
+      "credentials": [
+        { "type": "password", "value": "writer", "temporary": false }
+      ],
+      "groups": ["/are-writers"]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "are-backend",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "aRe3nt3rpr1seWorkshopBackendSecret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "config": {
+            "claim.name": "groups",
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "are-cli",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "attributes": {
+        "oauth2.device.authorization.grant.enabled": "true",
+        "pkce.code.challenge.method": ""
+      },
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "config": {
+            "claim.name": "groups",
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ]
+}

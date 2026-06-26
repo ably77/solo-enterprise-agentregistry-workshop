@@ -1,0 +1,59 @@
+# A self-hosted MCP server that needs a credential.
+#
+# FRED (Federal Reserve Economic Data) MCP server. It calls the St. Louis Fed
+# API and therefore needs a FRED_API_KEY of its OWN - this is the MCP server's
+# internal credential, NOT something the caller/gateway presents.
+#
+# The key is injected as a normal Kubernetes Secret -> pod env (secretKeyRef).
+# agentregistry only registers the in-cluster Service URL and never sees the key.
+# This is the recommended pattern for any MCP server with a backend credential:
+# keep the secret with the workload, managed by your usual k8s secret tooling
+# (External Secrets Operator, Vault CSI, sealed-secrets, ...).
+#
+# Create the Secret first (free key: https://fred.stlouisfed.org/docs/api/api_key.html):
+#   kubectl create secret generic fred-api-key -n mcp \
+#     --from-literal=FRED_API_KEY="${FRED_API_KEY}"
+#
+# NOTE: ably7/fred-mcp-server is a third-party community image - vet/pin your own
+# for anything beyond a workshop.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-fred
+  namespace: mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-fred
+  template:
+    metadata:
+      labels:
+        app: mcp-fred
+    spec:
+      containers:
+        - name: mcp-fred
+          image: ably7/fred-mcp-server:1.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: FRED_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: fred-api-key
+                  key: FRED_API_KEY
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-fred
+  namespace: mcp
+  labels:
+    app: mcp-fred
+spec:
+  selector:
+    app: mcp-fred
+  ports:
+    - port: 80
+      targetPort: 3000

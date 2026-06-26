@@ -1,0 +1,16 @@
+# Catalog entry for the in-cluster FRED MCP server.
+#
+# Note what is NOT here: there is no credential in this catalog object. FRED's
+# API key lives only in the `fred-api-key` Kubernetes Secret consumed by the
+# workload (fred-deployment.yaml). agentregistry just points at the Service URL.
+apiVersion: ar.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: fred-incluster-mcp
+  tag: latest
+spec:
+  title: FRED MCP (in-cluster)
+  description: Federal Reserve Economic Data MCP, self-hosted in-cluster; API key kept in a k8s Secret
+  remote:
+    type: streamable-http
+    url: http://mcp-fred.mcp.svc.cluster.local:80/mcp

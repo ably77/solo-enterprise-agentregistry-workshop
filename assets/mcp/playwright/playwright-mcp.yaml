@@ -1,0 +1,42 @@
+# Catalog entry for the Playwright browser-automation MCP server.
+#
+# Unlike demo-tools (which clones a Git repo via source.repository), Playwright
+# ships as a published npm package. So this is a PACKAGE-BASED stdio entry: the
+# catalog records the npm package + version + stdio transport. The npm registry
+# is the distribution, not the agent registry + Git - so `arctl pull` does not
+# apply here (there is no repo to clone).
+#
+#   arctl apply -f assets/mcp/playwright/playwright-mcp.yaml
+#
+# To run it locally you use the recorded package: `npx -y @playwright/mcp@0.0.76`
+# (your laptop is the runtime - see the lab). --headless --isolated keep it
+# automation-friendly: no visible window, fresh browser profile per run.
+apiVersion: ar.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: playwright
+  tag: latest
+spec:
+  title: Playwright Browser MCP
+  description: "Browser automation MCP (Playwright): navigate, click, snapshot, fill forms, screenshots"
+  source:
+    package:
+      origin:
+        type: npm
+        identifier: "@playwright/mcp"
+        npm:
+          serverName: "io.github.microsoft/playwright-mcp"
+          version: "0.0.76"
+      transport:
+        type: stdio
+  tools:
+    - name: browser_navigate
+      description: "Navigate to a URL"
+    - name: browser_snapshot
+      description: "Capture an accessibility snapshot of the current page"
+    - name: browser_click
+      description: "Click an element on the page"
+    - name: browser_type
+      description: "Type text into an editable element"
+    - name: browser_take_screenshot
+      description: "Take a screenshot of the current page"

@@ -1,0 +1,44 @@
+# A self-hosted MCP server deployed as an ordinary Kubernetes Deployment + Service.
+# This is the "bring your own MCP server" pattern: run the container yourself,
+# then register its in-cluster Service URL in the agentregistry catalog.
+#
+# arXiv MCP (academic paper search + PDF text extraction). Serves streamable-HTTP
+# on container port 8000 at path /mcp. No API key required.
+#
+# NOTE: ably7/airxiv-mcp is a third-party community image - fine for a workshop,
+# but vet and pin your own images for anything beyond a demo.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-airxiv
+  namespace: mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mcp-airxiv
+  template:
+    metadata:
+      labels:
+        app: mcp-airxiv
+    spec:
+      containers:
+        - name: mcp-airxiv
+          image: ably7/airxiv-mcp:0.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-airxiv
+  namespace: mcp
+  labels:
+    app: mcp-airxiv
+spec:
+  selector:
+    app: mcp-airxiv
+  ports:
+    - port: 80
+      targetPort: 8000

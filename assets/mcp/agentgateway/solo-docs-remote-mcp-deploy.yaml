@@ -1,0 +1,27 @@
+# Deploy the Solo.io Docs remote MCP catalog entry to the Virtual runtime so
+# agentregistry creates the child HTTPRoute + EnterpriseAgentgatewayBackend that
+# expose it through the parent Gateway.
+#
+# runtimeConfig.route.pathSuffix is appended under the parent route's prefix.
+# With the parent route from parent-gateway-and-route.yaml (/registry), the
+# resulting exposed path is:
+#
+#   /registry/solo-docs
+#
+# pathSuffix MUST be unique across every Deployment that targets this Virtual
+# runtime through the same parent route, or the child routes will collide.
+apiVersion: ar.dev/v1alpha1
+kind: Deployment
+metadata:
+  name: solo-docs-remote-mcp-agw
+spec:
+  targetRef:
+    kind: MCPServer
+    name: solo-docs-remote-mcp
+    tag: latest
+  runtimeRef:
+    kind: Runtime
+    name: virtual-default
+  runtimeConfig:
+    route:
+      pathSuffix: /solo-docs

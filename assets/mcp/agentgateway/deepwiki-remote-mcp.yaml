@@ -1,0 +1,19 @@
+# Remote streamable-HTTP MCP catalog entry for the public DeepWiki MCP.
+#
+# DeepWiki answers questions about public GitHub repositories. The upstream is
+# PUBLIC - no auth header - so apply it directly with no envsubst / token:
+#
+#   arctl apply -f assets/mcp/agentgateway/deepwiki-remote-mcp.yaml
+#
+# Public tools: read_wiki_structure, read_wiki_contents, ask_question.
+apiVersion: ar.dev/v1alpha1
+kind: MCPServer
+metadata:
+  name: deepwiki-remote-mcp
+  tag: latest
+spec:
+  title: DeepWiki Remote MCP
+  description: DeepWiki MCP (mcp.deepwiki.com) - AI docs/Q&A for GitHub repos, exposed through Agentgateway
+  remote:
+    type: streamable-http
+    url: https://mcp.deepwiki.com/mcp
