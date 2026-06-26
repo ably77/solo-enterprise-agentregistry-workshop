@@ -1,5 +1,9 @@
 # Changelog
 
+0.0.2 - (6-26-26)
+---
+- Quick updates to `README.md`
+
 0.0.1 - (6-26-26)
 ---
 - Initial commit. Enterprise Agentregistry Workshop which covers the following labs:

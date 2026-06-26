@@ -19,6 +19,7 @@ you'll have:
 - Cataloged MCP servers of every shape — local `stdio`, public remote, and self-hosted in-cluster — including ones that need their own API key, kept in a k8s `Secret` and out of the catalog
 - Fronted those MCP servers with Enterprise Agentgateway behind a single endpoint, with many backends at distinct paths
 - Managed versioned `Prompt` catalog assets independently of agents
+- Published versioned `Skill` catalog assets with `arctl init`/`apply`, shipped a second tag, and pulled them as a consumer
 - Locked the catalog down with `AccessPolicy` RBAC and gated submissions behind admin approval workflows
 
 ![Agentregistry Enterprise catalog UI](assets/screenshots/05-are-ui-catalog.png)
@@ -76,6 +77,7 @@ you'll have:
 - Register MCP servers as catalog assets — `stdio` (local, in-tree), public `streamable-http` (remote), and self-hosted in-cluster servers (registered by Service URL), including servers that need their own API key (kept in a k8s `Secret`, out of the catalog)
 - Expose remote and in-cluster MCP servers through Enterprise Agentgateway via a `Virtual` runtime — one gateway endpoint, many backends at distinct paths, with gateway-managed TLS to the upstream
 - Manage versioned `Prompt` catalog assets independently of agents
+- Publish versioned `Skill` catalog assets (`arctl init`/`apply`), ship a second tag, and `arctl pull` them as a consumer
 - Enforce catalog RBAC with `AccessPolicy` against Keycloak group names
 - Gate catalog submissions behind admin approval and approve/reject via the `/v0/approve` API
 
