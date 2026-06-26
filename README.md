@@ -5,6 +5,8 @@ and control plane driven by `arctl` and the `ar.dev/v1alpha1` API. One install l
 baseline; every other lab is short, self-contained, and returns the cluster to that baseline when
 you're done.
 
+![Agentregistry Enterprise catalog UI](assets/screenshots/05-are-ui-catalog.png)
+
 ## Prerequisites
 
 - A Kubernetes cluster (≥ 1.29) with a default `StorageClass` and a working `LoadBalancer` Service controller
