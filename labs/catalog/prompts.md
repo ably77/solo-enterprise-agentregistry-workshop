@@ -1,4 +1,4 @@
-# Prompts (Catalog Quickstart)
+# Prompts
 
 `Prompt` is a first-class Agentregistry catalog asset, same family as `Agent` and `MCPServer` - an
 immutable, versioned blob of prompt text that agents can reference by name + tag. You manage prompts

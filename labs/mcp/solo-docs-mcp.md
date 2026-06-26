@@ -244,5 +244,5 @@ Leave `Runtime/virtual-default` in place - it's the seeded default.
 
 - [MCP Client UI](mcp-client-ui.md) - call this endpoint from a browser instead of curl
 - [Local stdio MCP Server](local-stdio-mcp.md)
-- [Prompts (Catalog Quickstart)](../catalog/prompts.md)
+- [Prompts](../catalog/prompts.md)
 - [AccessPolicy / RBAC](../access-control/access-policies.md)

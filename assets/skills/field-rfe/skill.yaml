@@ -1,0 +1,14 @@
+apiVersion: ar.dev/v1alpha1
+kind: Skill
+metadata:
+  name: field-rfe
+  tag: "1.0.0"
+spec:
+  title: Field RFE Draft
+  description: Drafts a customer-driven RFE/issue from context you provide in local markdown files, using a local issue template; output is always a reviewable draft, never auto-filed.
+  # The skill's content (SKILL.md + supporting files) lives in a source repo; the
+  # catalog stores a reference to it. Consumers fetch it with `arctl pull skill field-rfe`.
+  source:
+    repository:
+      url: "https://github.com/ably77/solo-enterprise-agentregistry-workshop"
+      subfolder: "assets/skills/field-rfe"
