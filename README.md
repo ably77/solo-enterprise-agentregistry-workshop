@@ -1,9 +1,25 @@
 # Enterprise Agentregistry Workshop
 
-A hands-on workshop for **Solo.io Enterprise Agentregistry** — the agent/MCP catalog
-and control plane driven by `arctl` and the `ar.dev/v1alpha1` API. One install lab gets you a full
-baseline; every other lab is short, self-contained, and returns the cluster to that baseline when
-you're done.
+As teams adopt AI agents and MCP servers, the building blocks pile up faster than anyone can
+govern them — MCP servers, agents, and prompts scattered across repos, wikis, and laptops, each
+wired up by hand, with no shared source of truth for what exists, who owns it, or who's allowed
+to use it.
+
+**Solo.io Enterprise Agentregistry** brings that sprawl under control. It's a centralized,
+Kubernetes-native catalog and control plane for your agentic infrastructure: register MCP servers,
+agents, and prompts once as governed catalog assets, expose them through Enterprise Agentgateway at
+a single endpoint, and enforce who can discover and submit them with RBAC and approval workflows.
+The same `arctl` CLI and `ar.dev/v1alpha1` API drive it whether you're on a laptop or a shared
+cluster.
+
+This hands-on workshop takes you from an empty cluster to that fully governed registry. By the end,
+you'll have:
+
+- Installed Agentregistry Enterprise on Kubernetes with OIDC login (in-cluster Keycloak)
+- Cataloged MCP servers of every shape — local `stdio`, public remote, and self-hosted in-cluster — including ones that need their own API key, kept in a k8s `Secret` and out of the catalog
+- Fronted those MCP servers with Enterprise Agentgateway behind a single endpoint, with many backends at distinct paths
+- Managed versioned `Prompt` catalog assets independently of agents
+- Locked the catalog down with `AccessPolicy` RBAC and gated submissions behind admin approval workflows
 
 ![Agentregistry Enterprise catalog UI](assets/screenshots/05-are-ui-catalog.png)
 
@@ -43,7 +59,9 @@ you're done.
 
 ## Catalog
 
-- [Prompts (Catalog Quickstart)](labs/catalog/prompts.md) — `Prompt` CRUD via `arctl` (~5 min)
+- [Prompts](labs/catalog/prompts.md) — `Prompt` CRUD via `arctl` (~5 min)
+- [Field RFE Skill](labs/catalog/field-rfe-skill.md) — scaffold a skill with `arctl init skill`, then publish a versioned `Skill` to the catalog with `arctl apply` and ship a second tag (no agent attach) (~8 min)
+- [Changelog Skill](labs/catalog/changelog-skill.md) — the same skill flow with the `/changelog` skill: publish, version, and `arctl pull` it as a consumer (~8 min)
 
 ## Access Control
 
@@ -76,13 +94,16 @@ fe-enterprise-agentregistry-workshop/
 │   │   ├── playwright-mcp.md            # package-based stdio MCP (npm @playwright/mcp)
 │   │   └── mcp-client-ui.md             # local Streamlit client for the gateway MCPs
 │   ├── catalog/
-│   │   └── prompts.md
+│   │   ├── prompts.md
+│   │   ├── field-rfe-skill.md         # Skill catalog asset (field-rfe example)
+│   │   └── changelog-skill.md         # Skill catalog asset (/changelog example)
 │   └── access-control/
 │       ├── access-policies.md
 │       └── approval-workflows.md
 ├── assets/
 │   ├── keycloak/                        # kustomize stack: deployment + agentregistry-enterprise.json (--import-realm)
 │   ├── prompts/                         # Prompt manifest
+│   ├── skills/                          # field-rfe + changelog SKILL.md (publishable skill sources)
 │   └── mcp/
 │       ├── demo-mcp/                    # stdio MCP source (server.py) + manifest
 │       ├── playwright/                  # package-based (npm) stdio MCP manifest

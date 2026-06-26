@@ -584,6 +584,106 @@ EOF
   _arctl delete prompt kubernetes-triage-system-prompt --tag 1.0.0 >/dev/null 2>&1 || true
 }
 
+lab_skills() {
+  phase "Lab — Skills (catalog)"
+  step "Publish field-rfe skill (tag 1.0.0)"
+  assert "apply field-rfe skill.yaml" _arctl apply -f assets/skills/field-rfe/skill.yaml
+  local s; s=$(_arctl get skills 2>/dev/null)
+  assert_contains "field-rfe shows in listing" "field-rfe" "$s"
+  assert "get skill field-rfe --tag 1.0.0" _arctl get skill field-rfe --tag 1.0.0
+
+  step "Catalog stores the source reference (not the content)"
+  local sy; sy=$(_arctl get skill field-rfe --tag 1.0.0 -o yaml 2>/dev/null)
+  assert_contains "source.repository.url recorded on the catalog entry" "github.com" "$sy"
+
+  step "Ship a second version as a new tag (1.1.0)"
+  _arctl apply -f - >/dev/null 2>&1 <<'EOF'
+apiVersion: ar.dev/v1alpha1
+kind: Skill
+metadata:
+  name: field-rfe
+  tag: "1.1.0"
+spec:
+  title: Field RFE Draft
+  description: Drafts a customer-driven RFE/issue from context you provide in local markdown files, using a local issue template; output is always a reviewable draft, never auto-filed. Always applies a Customer label.
+  source:
+    repository:
+      url: "https://github.com/ably77/solo-enterprise-agentregistry-workshop"
+      subfolder: "assets/skills/field-rfe"
+EOF
+  # Both tags coexist and are independently fetchable; consumers pin a tag.
+  assert "get skill field-rfe --tag 1.1.0 (new version)" _arctl get skill field-rfe --tag 1.1.0
+  assert "get skill field-rfe --tag 1.0.0 still present" _arctl get skill field-rfe --tag 1.0.0
+  local tags; tags=$(_arctl get skill field-rfe --all-tags 2>/dev/null)
+  assert_contains "both tags coexist (1.1.0)" "1.1.0" "$tags"
+  assert_contains "both tags coexist (1.0.0)" "1.0.0" "$tags"
+
+  # Consumer round-trip: pull the source from its Git reference. This needs the skill's
+  # subfolder pushed to the source repo's default branch, so it's best-effort — it PASSES
+  # if the SKILL.md is fetched, and SKIPs (not fails) when the content isn't published yet.
+  step "Pull the skill source as a consumer (best-effort)"
+  local pdir; pdir="$(mktemp -d)"
+  if _arctl pull skill field-rfe "$pdir/field-rfe" --tag 1.1.0 >/dev/null 2>&1 && [ -f "$pdir/field-rfe/SKILL.md" ]; then
+    pass "arctl pull fetched SKILL.md from the source repository"
+  else
+    skip "arctl pull (source subfolder not on the repo's default branch yet)"
+  fi
+  rm -rf "$pdir"
+
+  step "Cleanup skills"
+  _arctl delete skill field-rfe --all-tags >/dev/null 2>&1 || true
+}
+
+lab_changelog_skill() {
+  phase "Lab — Changelog Skill (catalog)"
+  step "Publish changelog skill (tag 1.0.0)"
+  assert "apply changelog skill.yaml" _arctl apply -f assets/skills/changelog/skill.yaml
+  local s; s=$(_arctl get skills 2>/dev/null)
+  assert_contains "changelog shows in listing" "changelog" "$s"
+  assert "get skill changelog --tag 1.0.0" _arctl get skill changelog --tag 1.0.0
+
+  step "Catalog stores the source reference (not the content)"
+  local sy; sy=$(_arctl get skill changelog --tag 1.0.0 -o yaml 2>/dev/null)
+  assert_contains "source.repository.url recorded on the catalog entry" "github.com" "$sy"
+
+  step "Ship a second version as a new tag (1.1.0)"
+  _arctl apply -f - >/dev/null 2>&1 <<'EOF'
+apiVersion: ar.dev/v1alpha1
+kind: Skill
+metadata:
+  name: changelog
+  tag: "1.1.0"
+spec:
+  title: Changelog
+  description: Updates CHANGELOG.md with a concise entry for the current conversation's changes, matching the repo's version and date format; always shown for confirmation before writing. Branch-aware - new version entry on main, appends to the latest entry on feature branches.
+  source:
+    repository:
+      url: "https://github.com/ably77/solo-enterprise-agentregistry-workshop"
+      subfolder: "assets/skills/changelog"
+EOF
+  # Both tags coexist and are independently fetchable; consumers pin a tag.
+  assert "get skill changelog --tag 1.1.0 (new version)" _arctl get skill changelog --tag 1.1.0
+  assert "get skill changelog --tag 1.0.0 still present" _arctl get skill changelog --tag 1.0.0
+  local tags; tags=$(_arctl get skill changelog --all-tags 2>/dev/null)
+  assert_contains "both tags coexist (1.1.0)" "1.1.0" "$tags"
+  assert_contains "both tags coexist (1.0.0)" "1.0.0" "$tags"
+
+  # Consumer round-trip: pull the source from its Git reference. This needs the skill's
+  # subfolder pushed to the source repo's default branch, so it's best-effort — it PASSES
+  # if the SKILL.md is fetched, and SKIPs (not fails) when the content isn't published yet.
+  step "Pull the skill source as a consumer (best-effort)"
+  local pdir; pdir="$(mktemp -d)"
+  if _arctl pull skill changelog "$pdir/changelog" --tag 1.1.0 >/dev/null 2>&1 && [ -f "$pdir/changelog/SKILL.md" ]; then
+    pass "arctl pull fetched SKILL.md from the source repository"
+  else
+    skip "arctl pull (source subfolder not on the repo's default branch yet)"
+  fi
+  rm -rf "$pdir"
+
+  step "Cleanup changelog skill"
+  _arctl delete skill changelog --all-tags >/dev/null 2>&1 || true
+}
+
 lab_access_policies() {
   phase "Lab — AccessPolicy / RBAC"
   # ensure there is at least one catalog asset (demo-tools registered earlier)
@@ -766,6 +866,8 @@ run_labs() {
   lab_fred
   lab_local_stdio
   lab_prompts
+  lab_skills
+  lab_changelog_skill
   lab_access_policies
   lab_approval
 }
