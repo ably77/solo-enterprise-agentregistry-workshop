@@ -39,6 +39,8 @@ you're done.
 - [Playwright Browser MCP](labs/mcp/playwright-mcp.md) — register a **package-based** stdio MCP (npm `@playwright/mcp`) and drive a real headless browser locally
 - [MCP Client UI](labs/mcp/mcp-client-ui.md) — a local Streamlit app to call the gateway-fronted MCPs from a browser (live/not-deployed status, Connect, tool dropdowns, gateway logs) instead of hand-written `curl`
 
+![MCP Client UI calling a gateway-fronted MCP](assets/screenshots/08-mcp-client-call-result.png)
+
 ## Catalog
 
 - [Prompts (Catalog Quickstart)](labs/catalog/prompts.md) — `Prompt` CRUD via `arctl` (~5 min)
