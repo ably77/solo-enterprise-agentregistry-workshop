@@ -707,10 +707,15 @@ lab_access_policies() {
   if printf '%s' "$before" | grep -qiE 'no mcps|No mcps found'; then
     pass "reader sees no catalog before policy"
   else
-    # reader may already have a policy from a prior run; clean and retry
+    # reader already has the (now intentionally persisted) grant from a prior run;
+    # clean it and poll until the revocation propagates before re-establishing the
+    # before/after contrast this lab depends on.
     _arctl delete accesspolicy are-readers-read-catalog >/dev/null 2>&1 || true
-    before=$(ARCTL_API_TOKEN="$(_token_for reader)" arctl get mcps 2>&1)
-    if printf '%s' "$before" | grep -qiE 'no mcps'; then pass "reader sees no catalog before policy"; else fail "reader unexpectedly sees catalog before policy"; fi
+    if poll 30 3 _reader_sees_no_mcps; then
+      pass "reader sees no catalog before policy (cleared leftover grant)"
+    else
+      fail "reader unexpectedly sees catalog before policy"
+    fi
   fi
 
   step "Grant are-readers registry:read (principal = group NAME)"
@@ -751,10 +756,14 @@ EOF
     fail "reader still sees no skills after registry:read grant"
   fi
 
-  step "Cleanup access policy (avoid cross-lab contamination)"
-  assert "delete are-readers-read-catalog" _arctl delete accesspolicy are-readers-read-catalog
+  # Intentionally left in place: a read-only grant is a fine standing demo state and
+  # populates the Access Policies UI page. The baseline step above is idempotent — it
+  # detects a leftover are-readers-read-catalog policy and deletes/retries on re-run.
+  # (The approval lab's registry:write policy is still cleaned up — write access should
+  # not linger.)
 }
 _reader_sees_mcps() { ARCTL_API_TOKEN="$(_token_for reader)" arctl get mcps 2>/dev/null | grep -qiE 'demo-tools|solo-docs|arxiv|deepwiki'; }
+_reader_sees_no_mcps() { ! _reader_sees_mcps; }
 _reader_sees_skills() { ARCTL_API_TOKEN="$(_token_for reader)" arctl get skills 2>/dev/null | grep -qiE 'field-rfe|changelog'; }
 
 lab_approval() {
