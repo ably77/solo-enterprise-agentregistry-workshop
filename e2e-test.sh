@@ -536,6 +536,22 @@ lab_local_stdio() {
   fi
 }
 
+lab_playwright() {
+  phase "Lab — Playwright Browser MCP (package-based stdio)"
+  step "Register package-based stdio MCPServer (npm @playwright/mcp)"
+  assert "apply playwright manifest" _arctl apply -f assets/mcp/playwright/playwright-mcp.yaml
+  local mcps; mcps=$(_arctl get mcps 2>/dev/null)
+  assert_contains "playwright shows in catalog listing" "playwright" "$mcps"
+  assert "get playwright --tag latest works" _arctl get mcp playwright --tag latest
+
+  step "Catalog records the npm package source (not a Git repo)"
+  local py; py=$(_arctl get mcp playwright --tag latest -o yaml 2>/dev/null)
+  assert_contains "source.package npm identifier recorded" "@playwright/mcp" "$py"
+  # Package-based stdio: the npm registry is the distribution, so there is no repo
+  # to clone and `arctl pull` does not apply (the lab covers this). Left published
+  # alongside the other MCP servers as a catalog fixture.
+}
+
 lab_prompts() {
   phase "Lab — Prompts (catalog)"
   step "Apply team-local Prompt asset"
@@ -629,9 +645,8 @@ EOF
     skip "arctl pull (source subfolder not on the repo's default branch yet)"
   fi
   rm -rf "$pdir"
-
-  step "Cleanup skills"
-  _arctl delete skill field-rfe --all-tags >/dev/null 2>&1 || true
+  # Intentionally left published: the AccessPolicy/RBAC lab below uses catalog
+  # skills as fixtures to prove a reader gains skill visibility after a grant.
 }
 
 lab_changelog_skill() {
@@ -679,9 +694,8 @@ EOF
     skip "arctl pull (source subfolder not on the repo's default branch yet)"
   fi
   rm -rf "$pdir"
-
-  step "Cleanup changelog skill"
-  _arctl delete skill changelog --all-tags >/dev/null 2>&1 || true
+  # Intentionally left published: the AccessPolicy/RBAC lab below uses catalog
+  # skills as fixtures to prove a reader gains skill visibility after a grant.
 }
 
 lab_access_policies() {
@@ -693,10 +707,15 @@ lab_access_policies() {
   if printf '%s' "$before" | grep -qiE 'no mcps|No mcps found'; then
     pass "reader sees no catalog before policy"
   else
-    # reader may already have a policy from a prior run; clean and retry
+    # reader already has the (now intentionally persisted) grant from a prior run;
+    # clean it and poll until the revocation propagates before re-establishing the
+    # before/after contrast this lab depends on.
     _arctl delete accesspolicy are-readers-read-catalog >/dev/null 2>&1 || true
-    before=$(ARCTL_API_TOKEN="$(_token_for reader)" arctl get mcps 2>&1)
-    if printf '%s' "$before" | grep -qiE 'no mcps'; then pass "reader sees no catalog before policy"; else fail "reader unexpectedly sees catalog before policy"; fi
+    if poll 30 3 _reader_sees_no_mcps; then
+      pass "reader sees no catalog before policy (cleared leftover grant)"
+    else
+      fail "reader unexpectedly sees catalog before policy"
+    fi
   fi
 
   step "Grant are-readers registry:read (principal = group NAME)"
@@ -730,10 +749,22 @@ EOF
     fail "reader still sees nothing after registry:read grant"
   fi
 
-  step "Cleanup access policy (avoid cross-lab contamination)"
-  assert "delete are-readers-read-catalog" _arctl delete accesspolicy are-readers-read-catalog
+  step "Prove it: reader now sees catalog skills"
+  if poll 30 3 _reader_sees_skills; then
+    pass "reader sees catalog skills after policy grant"
+  else
+    fail "reader still sees no skills after registry:read grant"
+  fi
+
+  # Intentionally left in place: a read-only grant is a fine standing demo state and
+  # populates the Access Policies UI page. The baseline step above is idempotent — it
+  # detects a leftover are-readers-read-catalog policy and deletes/retries on re-run.
+  # (The approval lab's registry:write policy is still cleaned up — write access should
+  # not linger.)
 }
 _reader_sees_mcps() { ARCTL_API_TOKEN="$(_token_for reader)" arctl get mcps 2>/dev/null | grep -qiE 'demo-tools|solo-docs|arxiv|deepwiki'; }
+_reader_sees_no_mcps() { ! _reader_sees_mcps; }
+_reader_sees_skills() { ARCTL_API_TOKEN="$(_token_for reader)" arctl get skills 2>/dev/null | grep -qiE 'field-rfe|changelog'; }
 
 lab_approval() {
   phase "Lab — Approval Workflows"
@@ -865,6 +896,7 @@ run_labs() {
   lab_arxiv_incluster
   lab_fred
   lab_local_stdio
+  lab_playwright
   lab_prompts
   lab_skills
   lab_changelog_skill
