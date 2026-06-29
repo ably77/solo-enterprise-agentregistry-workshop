@@ -1,0 +1,25 @@
+# Air-gap overlay for the Keycloak stack.
+#
+# Apply THIS instead of assets/keycloak/ when running the air-gap install:
+#
+#     kubectl apply -k assets/keycloak-airgap/
+#
+# It pulls in the full base stack from ../keycloak (namespace, realm
+# ConfigMap, Deployment, Service) unchanged and only rewrites the Keycloak
+# image to your private registry. Keeping the override here means the shared
+# base (assets/keycloak/) stays pristine for the connected install
+# (001-installation.md) and e2e-test.sh, which expect quay.io/keycloak.
+#
+# It lives in a sibling directory (not assets/keycloak/overlays/) on purpose:
+# kustomize rejects an overlay whose base is one of its own parent
+# directories ("cycle detected"), so the overlay cannot sit under the base.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../keycloak
+
+images:
+  - name: quay.io/keycloak/keycloak
+    newName: docker.io/ably7/keycloak   # = $PRIVATE_REGISTRY/keycloak
+    newTag: "26.0"

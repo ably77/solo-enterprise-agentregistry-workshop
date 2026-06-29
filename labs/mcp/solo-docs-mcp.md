@@ -115,6 +115,18 @@ arctl get deployment solo-docs-remote-mcp-agw -o yaml
 Look for `status.conditions[].reason: DeployedViaAgentgateway` (`status: "True"`) and
 `status.details.agentgateway.exposedAt[].url: http://<gateway-address>/registry/solo-docs`.
 
+> **(Air-gap) This is the first step that exercises the server-managed backend binaries.** To
+> provision this backend the server downloads `agw-sync` / `agentgateway` / `agentregistry-sts` from
+> `global.binaryHost` (set during the [air-gap install](../installation/airgap/001-airgap.md)). If the
+> Deployment never reaches `DeployedViaAgentgateway` — it stays pending with no clear error — your
+> binary host is the prime suspect. Confirm the download succeeded:
+> ```bash
+> kubectl logs -n agentregistry-system deploy/agentregistry-enterprise-server | grep -i -E "download|agw-sync|agentgateway|sts"
+> ```
+> A reachable host logs successful downloads; failures show connection/404 errors against your
+> `binaryHost`. (On a connected install with `binaryHost=https://storage.googleapis.com` this just
+> works.)
+
 > **Ordering gotcha:** if you applied this Deployment *before* the parent Gateway reported
 > `PROGRAMMED=True`, it gets stuck with `reason: NoAcceptedListener`. It does **not** self-heal once
 > the Gateway is ready, and re-`apply`-ing the identical spec returns `unchanged` without
