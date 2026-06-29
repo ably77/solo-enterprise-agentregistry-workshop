@@ -97,15 +97,15 @@ kubectl annotate storageclass <name> storageclass.kubernetes.io/is-default-class
 ```
 
 **Confirm a `LoadBalancer` Service can actually get an external address.** OIDC redirects and the
-`arctl`/UI endpoints all depend on this, so test it now rather than discovering it later. Use a
-mirrored image even for the smoke test so you don't accidentally reach Docker Hub:
+`arctl`/UI endpoints all depend on this, so test it now rather than discovering it later. The LB
+controller assigns an external IP independently of any backing pods, so a bare `LoadBalancer`
+Service is enough — no image pull, nothing to mirror:
 
 ```bash
-kubectl create deployment lb-smoke --image=$PRIVATE_REGISTRY/nginx
-kubectl expose deployment lb-smoke --port=80 --type=LoadBalancer
+kubectl create service loadbalancer lb-smoke --tcp=80:80
 kubectl get svc lb-smoke -w
 # Wait for EXTERNAL-IP to be populated (not <pending>), then Ctrl-C
-kubectl delete deployment lb-smoke && kubectl delete svc lb-smoke
+kubectl delete svc lb-smoke
 ```
 
 If `EXTERNAL-IP` stays `<pending>`, install/fix your LoadBalancer provider before continuing.
@@ -159,26 +159,33 @@ which defines the `agentregistry-enterprise` realm, three groups (`are-admins` /
 (`are-backend` confidential, `are-cli` public + device-code), and the `groups` claim mapper on **both**
 clients. Keycloak imports it on first boot (`--import-realm`).
 
-The kustomize stack pins `quay.io/keycloak/keycloak:26.0`. To pull it from your private registry
-instead, add a Kustomize `images:` transform to [`assets/keycloak/kustomization.yaml`](../../../assets/keycloak/kustomization.yaml)
-— this rewrites the image without editing the Deployment:
+The base stack ([`assets/keycloak/`](../../../assets/keycloak/)) pins `quay.io/keycloak/keycloak:26.0`.
+Rather than editing that base in place — it's shared with the connected install and `e2e-test.sh` —
+apply the **air-gap overlay** at [`assets/keycloak-airgap/`](../../../assets/keycloak-airgap/), which
+pulls in the whole base unchanged and only rewrites the Keycloak image to your private registry:
 
 ```yaml
-# Append to assets/keycloak/kustomization.yaml
+# assets/keycloak-airgap/kustomization.yaml (already in the repo)
+resources:
+  - ../keycloak
 images:
   - name: quay.io/keycloak/keycloak
     newName: docker.io/ably7/keycloak   # = $PRIVATE_REGISTRY/keycloak
     newTag: "26.0"
 ```
 
+> Swap `docker.io/ably7/keycloak` for your own registry. (The overlay sits in a sibling directory,
+> not under `assets/keycloak/`, because kustomize rejects an overlay whose base is one of its parent
+> directories.)
+
 > If your registry needs a pull secret, add it to the Keycloak pod by patching the Deployment in the
-> same kustomization (`patches:`) or by attaching the secret to the namespace's `default`
+> overlay (`patches:`) or by attaching the secret to the namespace's `default`
 > ServiceAccount: `kubectl patch serviceaccount default -n keycloak -p '{"imagePullSecrets":[{"name":"my-registry-secret"}]}'`.
 
-Apply the whole stack (Kustomize builds the realm ConfigMap from the JSON):
+Apply the overlay (Kustomize builds the realm ConfigMap from the JSON):
 
 ```bash
-kubectl apply -k ../../../assets/keycloak/
+kubectl apply -k ../../../assets/keycloak-airgap/
 kubectl rollout status deployment/keycloak -n keycloak
 ```
 
@@ -277,6 +284,14 @@ image:
   tag: v${ARE_VERSION}
   pullPolicy: IfNotPresent
 
+# --- Enterprise license (same trial key as Agentgateway) ---
+# Without this the server still runs, but logs a red "LICENSE ERROR: no
+# licenses found" stacktrace at startup. createSecret makes the chart mint the
+# Secret from the key below; on a fresh install the pod boots with it in place.
+licensing:
+  createSecret: true
+  licenseKey: "${SOLO_TRIAL_LICENSE_KEY}"
+
 service:
   type: LoadBalancer
 
@@ -339,12 +354,13 @@ helm upgrade --install agentregistry-enterprise \
 > (Harbor/ECR/Artifactory/GAR) can keep the nested path. If you'd rather pull the chart from the public
 > URL and override only images, swap the `oci://...` line for the public URL and keep the values above.
 
-> **Confirm the binary downloads succeeded.** Unlike a missing image (which `CrashLoopBackOff`s
-> loudly), a missing backend binary lets the server pod run but leaves managed gateway backends down.
-> Check the logs for download errors against `$BINARY_HOST`:
-> ```bash
-> kubectl logs -n agentregistry-system deploy/agentregistry-enterprise-server | grep -i -E "download|binary|agw-sync|agentgateway|sts"
-> ```
+> **Backend binaries download lazily — you'll verify them in the first MCP lab.** The server pulls
+> `agw-sync` / `agentgateway` / `agentregistry-sts` from `$BINARY_HOST` only when it first provisions
+> a managed gateway backend, which doesn't happen at baseline. Unlike a missing image (which
+> `CrashLoopBackOff`s loudly), a missing binary lets the server pod run fine here and only surfaces
+> later as a backend that never deploys. The
+> [Solo Docs MCP lab](../../mcp/solo-docs-mcp.md) is the first to provision a backend; it includes the
+> check to confirm `$BINARY_HOST` was reachable.
 
 > **Re-running against an existing install?** On a fresh cluster, skip this. If the registry is already
 > installed and you re-ran step 3 (so `BACKEND_CLIENT_SECRET`/`OIDC_ISSUER` changed), the running pod

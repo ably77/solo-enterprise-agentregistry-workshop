@@ -1,12 +1,19 @@
 # Changelog
 
+0.0.5 - (6-29-26)
+---
+- Air-gap lab fixes:
+  - Renamed `mirror-images-to-private-repo.sh` -> `mirror-images.sh` to match all doc references/links
+  - Keycloak image override moved to an `assets/keycloak/overlays/airgap/` overlay so the shared base (used by the connected install + `e2e-test.sh`) is left untouched
+  - Added `licensing` to the Agentregistry Enterprise values so the server no longer logs a `LICENSE ERROR` at startup
+
 0.0.4 - (6-29-26)
 ---
 - Update Agentregistry version to `v2026.6.2`
 - Added airgap installation lab at `solo-enterprise-agentregistry-workshop/labs/installation/airgap`
 - Add image-list.md at `solo-enterprise-agentregistry-workshop/labs/installation/image-list.md`
 - Add airgapped image list at `solo-enterprise-agentregistry-workshop/labs/installation/airgap/ably7-image-list.md`
-- Provide a script to update air-gapped image repo `solo-enterprise-agentregistry-workshop/labs/installation/mirror-images-to-private-repo.sh`
+- Provide a script to update air-gapped image repo `solo-enterprise-agentregistry-workshop/labs/installation/mirror-images.sh`
 
 0.0.3 - (6-26-26)
 ---
