@@ -1,5 +1,13 @@
 # Changelog
 
+0.0.4 - (6-29-26)
+---
+- Update Agentregistry version to `v2026.6.2`
+- Added airgap installation lab at `solo-enterprise-agentregistry-workshop/labs/installation/airgap`
+- Add image-list.md at `solo-enterprise-agentregistry-workshop/labs/installation/image-list.md`
+- Add airgapped image list at `solo-enterprise-agentregistry-workshop/labs/installation/airgap/ably7-image-list.md`
+- Provide a script to update air-gapped image repo `solo-enterprise-agentregistry-workshop/labs/installation/mirror-images-to-private-repo.sh`
+
 0.0.3 - (6-26-26)
 ---
 - Updates to `e2e-test.sh`

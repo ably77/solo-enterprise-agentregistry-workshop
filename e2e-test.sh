@@ -28,8 +28,8 @@
 set -uo pipefail
 
 # ---------- pinned versions --------------------------------------------------
-ARCTL_VERSION="${ARCTL_VERSION:-v2026.6.1}"
-ARE_HELM_VERSION="${ARE_HELM_VERSION:-2026.6.1}"
+ARCTL_VERSION="${ARCTL_VERSION:-v2026.6.2}"
+ARE_HELM_VERSION="${ARE_HELM_VERSION:-2026.6.2}"
 AGW_VERSION="${AGW_VERSION:-v2026.6.1}"
 GW_API_VERSION="${GW_API_VERSION:-v1.5.0}"
 
@@ -127,13 +127,16 @@ _lb_has_ip() { [ -n "$(_lb_ip "$1" "${2:-default}")" ]; }
 install_arctl() {
   phase "Phase 1 — arctl CLI"
   export PATH="$HOME/.arctl/bin:$PATH"
-  if ! require_cmd arctl; then
+  local v; v=$(arctl version --json 2>/dev/null | jq -r '.cli.version' 2>/dev/null)
+  # (Re)install when arctl is absent OR pinned to a different version than the
+  # one already on PATH — a stale binary would otherwise skip the upgrade.
+  if ! require_cmd arctl || [ "$v" != "$ARCTL_VERSION" ]; then
     step "Installing arctl ${ARCTL_VERSION}"
     curl -sSL https://storage.googleapis.com/agentregistry-enterprise/install.sh | ARCTL_VERSION="$ARCTL_VERSION" sh >/dev/null 2>&1
     export PATH="$HOME/.arctl/bin:$PATH"
+    v=$(arctl version --json 2>/dev/null | jq -r '.cli.version' 2>/dev/null)
   fi
   assert "arctl on PATH" require_cmd arctl
-  local v; v=$(arctl version --json 2>/dev/null | jq -r '.cli.version' 2>/dev/null)
   assert_contains "arctl CLI version" "$ARCTL_VERSION" "$v"
 }
 
@@ -202,7 +205,7 @@ install_agentregistry() {
   step "helm install agentregistry-enterprise ${ARE_HELM_VERSION}"
   cat > /tmp/are-values.yaml <<EOF
 image:
-  tag: v2026.6.1
+  tag: v2026.6.2
 service:
   type: LoadBalancer
 oidc:
@@ -349,8 +352,15 @@ verify_baseline() {
   assert_contains "local runtime present" "local" "$rt"
 
   step "Server version populated"
+  # The running pod image tag is the authoritative version signal. The server's
+  # self-reported build metadata is informational only: published images don't
+  # always stamp it (e.g. the v2026.6.2 image reports "dev"/"unknown"), so
+  # asserting on it produces false failures even when the correct image is live.
+  local simg; simg=$(kubectl get deploy agentregistry-enterprise-server -n agentregistry-system \
+    -o jsonpath='{.spec.template.spec.containers[*].image}' 2>/dev/null)
+  assert_contains "server image tag ${ARE_HELM_VERSION}" "$ARE_HELM_VERSION" "$simg"
   local sv; sv=$(_arctl version --json 2>/dev/null | jq -r '.server.version' 2>/dev/null)
-  assert_contains "server reports ${ARE_HELM_VERSION}" "$ARE_HELM_VERSION" "$sv"
+  info "server self-reports version: ${sv:-<none>} (informational; image tag above is authoritative)"
 
   step "Admin privileges (accesspolicies must not 403)"
   assert "admin can list accesspolicies (superuser)" _arctl get accesspolicies
