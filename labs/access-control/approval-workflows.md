@@ -48,7 +48,7 @@ token_for() {
 ```bash
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.6.1 \
+  --version 2026.6.2 \
   --namespace agentregistry-system \
   --reuse-values \
   --set config.requireCreateApproval=true
@@ -175,7 +175,7 @@ arctl delete accesspolicy are-readers-catalog-write 2>/dev/null || true
 # disable the flag (does not retroactively release queued requests; reject those first)
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.6.1 \
+  --version 2026.6.2 \
   --namespace agentregistry-system \
   --reuse-values \
   --set config.requireCreateApproval=false

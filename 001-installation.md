@@ -58,7 +58,7 @@ If `EXTERNAL-IP` stays `<pending>`, install/fix your LoadBalancer provider befor
 ## 2. Install the `arctl` CLI
 
 ```bash
-export ARCTL_VERSION=v2026.6.1
+export ARCTL_VERSION=v2026.6.2
 curl -sSL https://storage.googleapis.com/agentregistry-enterprise/install.sh \
   | ARCTL_VERSION=$ARCTL_VERSION sh
 export PATH=$HOME/.arctl/bin:$PATH
@@ -76,7 +76,7 @@ Expected (server is empty until step 4 - that's fine):
 ```json
 {
   "cli": {
-    "version": "v2026.6.1",
+    "version": "v2026.6.2",
     "git_commit": "...",
     "build_time": "..."
   }
@@ -183,13 +183,20 @@ Expected (note: the claim is the plain group **name**, no `/` prefix):
 
 ## 4. Install Agentregistry Enterprise
 
+> [!NOTE]
+> **Air-gapped or private-registry install?** This lab pulls images from public registries and
+> downloads the `arctl` CLI and backend binaries from `storage.googleapis.com`. For the full set of
+> artifacts to mirror, see the [image list](labs/installation/image-list.md). To install with every
+> image and binary pointed at a private registry / internal artifact host, follow the dedicated
+> [air-gap install lab](labs/installation/airgap/001-airgap.md) instead.
+
 Build the Helm values from your sourced OIDC variables. `superuserRole: are-admins` matches the
 group **name** in the `groups` claim (Keycloak emits names, not GUIDs).
 
 ```bash
 cat > /tmp/are-values.yaml <<EOF
 image:
-  tag: v2026.6.1
+  tag: v2026.6.2
 service:
   type: LoadBalancer
 oidc:
@@ -216,7 +223,7 @@ EOF
 
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.6.1 \
+  --version 2026.6.2 \
   --namespace agentregistry-system \
   -f /tmp/are-values.yaml \
   --wait --timeout 5m
@@ -350,7 +357,7 @@ arctl version --json
 ```
 
 ```json
-{ "cli": { "version": "v2026.6.1", ... }, "server": { "version": "v2026.6.1", ... } }
+{ "cli": { "version": "v2026.6.2", ... }, "server": { "version": "v2026.6.2", ... } }
 ```
 
 > **Confirm admin privileges.** Your `admin` user should be a superuser. The most reliable check is

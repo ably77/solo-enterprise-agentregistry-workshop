@@ -43,6 +43,7 @@ you'll have:
 > **Start here.** Everything else assumes this baseline.
 
 - [001 — Installation](001-installation.md) — `arctl` + in-cluster Keycloak (OIDC) + Agentregistry Enterprise + Enterprise Agentgateway + login
+- [001 — Installation (Air-Gap / Private Registry)](labs/installation/airgap/001-airgap.md) — the same baseline with every image and binary mirrored to a private registry / internal artifact host ([image list](labs/installation/image-list.md))
 
 ---
 
@@ -88,6 +89,12 @@ fe-enterprise-agentregistry-workshop/
 ├── README.md
 ├── 001-installation.md                  # full baseline in one lab
 ├── labs/
+│   ├── installation/
+│   │   ├── image-list.md               # every image + binary to mirror for air-gap
+│   │   ├── mirror-images.sh            # mirror images + charts to your registry (multi-arch)
+│   │   └── airgap/
+│   │       ├── 001-airgap.md           # air-gapped baseline (private registry + internal artifact host)
+│   │       └── ably7-image-list.md     # illustrative mirrored-tag view
 │   ├── mcp/
 │   │   ├── solo-docs-mcp.md             # remote MCP through Agentgateway (start here)
 │   │   ├── deepwiki-mcp.md              # second remote MCP, same gateway
@@ -117,7 +124,7 @@ fe-enterprise-agentregistry-workshop/
 
 ## Validated On
 
-- Agentregistry Enterprise + `arctl` `v2026.6.1`
+- Agentregistry Enterprise + `arctl` `v2026.6.2`
 - Enterprise Agentgateway `v2026.6.1`
 - Keycloak `quay.io/keycloak/keycloak:26.0`
 - Kubernetes 1.29+
