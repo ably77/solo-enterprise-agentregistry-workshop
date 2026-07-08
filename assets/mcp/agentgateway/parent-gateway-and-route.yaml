@@ -6,7 +6,7 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
-  name: mcp-gateway
+  name: agentregistry-gateway
   namespace: agentgateway-system
   labels:
     agentregistry.solo.io/runtime: virtual-default
@@ -29,7 +29,7 @@ metadata:
     agentregistry.solo.io/runtime: virtual-default
 spec:
   parentRefs:
-    - name: mcp-gateway
+    - name: agentregistry-gateway
   rules:
     - matches:
         - path:

@@ -76,7 +76,7 @@ Same shared parent Gateway. Skip if you already applied it in another MCP lab.
 ```bash
 cat assets/mcp/agentgateway/parent-gateway-and-route.yaml
 kubectl apply -f assets/mcp/agentgateway/parent-gateway-and-route.yaml
-kubectl -n agentgateway-system get gateway mcp-gateway -w
+kubectl -n agentgateway-system get gateway agentregistry-gateway -w
 # Wait for PROGRAMMED=True + ADDRESS, then Ctrl-C
 ```
 
@@ -115,7 +115,7 @@ no credential in the catalog entry ✓
 ## 5. Call a Credentialed Tool
 
 ```bash
-export AGW_ADDRESS=$(kubectl -n agentgateway-system get gateway mcp-gateway \
+export AGW_ADDRESS=$(kubectl -n agentgateway-system get gateway agentregistry-gateway \
   -o jsonpath='{.status.addresses[0].value}')
 
 export SID=$(curl -s -D - -o /dev/null -X POST \
@@ -175,7 +175,7 @@ kubectl delete secret fred-api-key -n mcp
 kubectl delete namespace mcp --ignore-not-found
 # Only if you're done with the parent Gateway (other MCP labs share it):
 kubectl -n agentgateway-system delete httproute remote-mcp-delegate --ignore-not-found
-kubectl -n agentgateway-system delete gateway   mcp-gateway   --ignore-not-found
+kubectl -n agentgateway-system delete gateway   agentregistry-gateway   --ignore-not-found
 ```
 
 ## Next

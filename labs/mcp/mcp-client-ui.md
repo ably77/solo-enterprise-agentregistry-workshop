@@ -50,7 +50,7 @@ badged (🟢 live / ⚪ not deployed):
 The **sidebar** auto-detects the gateway address from:
 
 ```bash
-kubectl -n agentgateway-system get gateway mcp-gateway -o jsonpath='{.status.addresses[0].value}'
+kubectl -n agentgateway-system get gateway agentregistry-gateway -o jsonpath='{.status.addresses[0].value}'
 ```
 
 If it shows `Detected: <ip>`, you're set. If detection fails (e.g. `kubectl` isn't
@@ -97,7 +97,7 @@ Expand **View Gateway Logs** at the bottom. Each request you made shows as a car
 
 ```
 🟢 200  POST /registry/solo-docs · 488ms
-⏱ 23:44:15 · pod: mcp-gateway-96558f4f4-rz88q
+⏱ 23:44:15 · pod: agentregistry-gateway-96558f4f4-rz88q
 ```
 
 The `202`s are the `notifications/initialized` calls; the `200`s are

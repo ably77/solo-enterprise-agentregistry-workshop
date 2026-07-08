@@ -384,7 +384,7 @@ _token_for() {
 # =============================================================================
 # MCP helpers (streamable-HTTP over the gateway)
 # =============================================================================
-gw_address() { kubectl -n agentgateway-system get gateway mcp-gateway -o jsonpath='{.status.addresses[0].value}' 2>/dev/null; }
+gw_address() { kubectl -n agentgateway-system get gateway agentregistry-gateway -o jsonpath='{.status.addresses[0].value}' 2>/dev/null; }
 
 # mcp_session <url> -> echoes session id
 mcp_session() {
@@ -437,7 +437,7 @@ ensure_parent_gateway() {
   poll 120 5 _gw_programmed
 }
 _gw_programmed() {
-  [ "$(kubectl -n agentgateway-system get gateway mcp-gateway -o jsonpath='{.status.conditions[?(@.type=="Programmed")].status}' 2>/dev/null)" = True ] \
+  [ "$(kubectl -n agentgateway-system get gateway agentregistry-gateway -o jsonpath='{.status.conditions[?(@.type=="Programmed")].status}' 2>/dev/null)" = True ] \
     && [ -n "$(gw_address)" ]
 }
 
@@ -449,7 +449,7 @@ lab_parent_gateway() {
   step "Apply parent Gateway and delegate route"
   if ensure_parent_gateway; then
     AGW_ADDRESS="$(gw_address)"; export AGW_ADDRESS
-    pass "mcp-gateway PROGRAMMED=True, address ${AGW_ADDRESS}"
+    pass "agentregistry-gateway PROGRAMMED=True, address ${AGW_ADDRESS}"
   else
     fail "parent Gateway never reached PROGRAMMED=True"
   fi

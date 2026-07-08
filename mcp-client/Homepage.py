@@ -104,7 +104,7 @@ with st.sidebar:
     address = st.text_input(
         "Gateway address (IP or hostname)",
         value=detected,
-        help="The mcp-gateway LoadBalancer address. Override if auto-detect is wrong.",
+        help="The agentregistry-gateway LoadBalancer address. Override if auto-detect is wrong.",
     )
     scheme = st.selectbox("Scheme", ["http", "https"], index=0)
     port = st.text_input("Port (blank = default)", value="", help="Listener is HTTP/80 by default — leave blank.")

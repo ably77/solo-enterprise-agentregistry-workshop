@@ -34,7 +34,7 @@ ran the Solo Docs lab and left it up — then skip this):
 ```bash
 cat assets/mcp/agentgateway/parent-gateway-and-route.yaml
 kubectl apply -f assets/mcp/agentgateway/parent-gateway-and-route.yaml
-kubectl -n agentgateway-system get gateway mcp-gateway -w
+kubectl -n agentgateway-system get gateway agentregistry-gateway -w
 # Wait for PROGRAMMED=True + ADDRESS, then Ctrl-C
 ```
 
@@ -55,7 +55,7 @@ deployment and re-apply.)
 ## 3. Call It
 
 ```bash
-export AGW_ADDRESS=$(kubectl -n agentgateway-system get gateway mcp-gateway \
+export AGW_ADDRESS=$(kubectl -n agentgateway-system get gateway agentregistry-gateway \
   -o jsonpath='{.status.addresses[0].value}')
 
 export SID=$(curl -s -D - -o /dev/null -X POST \
@@ -105,7 +105,7 @@ arctl delete deployment deepwiki-remote-mcp-agw
 arctl delete mcp deepwiki-remote-mcp --tag latest
 # Only if you're done with the parent Gateway (other MCP labs share it):
 kubectl -n agentgateway-system delete httproute remote-mcp-delegate --ignore-not-found
-kubectl -n agentgateway-system delete gateway   mcp-gateway   --ignore-not-found
+kubectl -n agentgateway-system delete gateway   agentregistry-gateway   --ignore-not-found
 ```
 
 ## Next

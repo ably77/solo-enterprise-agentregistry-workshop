@@ -1,8 +1,10 @@
 # Changelog
 
-0.0.6 - (7-7-26)
+0.0.6 - (7-8-26)
 ---
 - Updates to `labs/access-control/approval-workflows.md`. Add multiple methods of approving a registry addition (AR UI, curl, BYO UI)
+- Renamed the parent Gateway `mcp-gateway` → `agentregistry-gateway` across labs, `mcp-client/`, `assets/mcp/agentgateway/`, and `e2e-test.sh`
+- Recaptured `assets/screenshots/06-are-ui-gateways.png` and `09-mcp-client-gateway-logs.png` to show the renamed gateway
 
 0.0.5 - (6-29-26)
 ---

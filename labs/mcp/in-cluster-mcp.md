@@ -80,7 +80,7 @@ Same parent Gateway the other MCP labs use. Skip if you already applied it.
 ```bash
 cat assets/mcp/agentgateway/parent-gateway-and-route.yaml
 kubectl apply -f assets/mcp/agentgateway/parent-gateway-and-route.yaml
-kubectl -n agentgateway-system get gateway mcp-gateway -w
+kubectl -n agentgateway-system get gateway agentregistry-gateway -w
 # Wait for PROGRAMMED=True and an ADDRESS, then Ctrl-C
 ```
 
@@ -118,7 +118,7 @@ Expect `reason: DeployedViaAgentgateway` and `url: http://<gateway-address>/regi
 ## 5. Call It Through the Gateway
 
 ```bash
-export AGW_ADDRESS=$(kubectl -n agentgateway-system get gateway mcp-gateway \
+export AGW_ADDRESS=$(kubectl -n agentgateway-system get gateway agentregistry-gateway \
   -o jsonpath='{.status.addresses[0].value}')
 
 # initialize → capture session
@@ -165,7 +165,7 @@ kubectl delete -f assets/mcp/in-cluster/arxiv-deployment.yaml
 kubectl delete namespace mcp --ignore-not-found
 # Only if you're done with the parent Gateway (other MCP labs share it):
 kubectl -n agentgateway-system delete httproute remote-mcp-delegate --ignore-not-found
-kubectl -n agentgateway-system delete gateway   mcp-gateway   --ignore-not-found
+kubectl -n agentgateway-system delete gateway   agentregistry-gateway   --ignore-not-found
 ```
 
 ## Next

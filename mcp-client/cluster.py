@@ -2,7 +2,7 @@
 
 Two responsibilities:
   1. Auto-detect the Enterprise Agentgateway LoadBalancer address for the
-     workshop's ``mcp-gateway`` Gateway.
+     workshop's ``agentregistry-gateway`` Gateway.
   2. Render the gateway proxy's access logs so you can watch MCP requests land.
 
 Adapted from solo-field-installer's demo-ui (utils/gateway.py + utils/logs.py),
@@ -20,8 +20,8 @@ import requests
 import streamlit as st
 
 NAMESPACE = "agentgateway-system"
-GATEWAY_NAME = "mcp-gateway"          # the workshop's parent Gateway
-PROXY_POD_PREFIX = "mcp-gateway"      # proxy Deployment/pods for that Gateway
+GATEWAY_NAME = "agentregistry-gateway"          # the workshop's parent Gateway
+PROXY_POD_PREFIX = "agentregistry-gateway"      # proxy Deployment/pods for that Gateway
 
 # RFC3339-ish timestamp emitted by agentgateway, e.g. "2026-06-25T17:54:30.485407Z".
 _TIMESTAMP_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z?$")
@@ -209,7 +209,7 @@ def _render_log_entry(entry: dict) -> None:
 
 
 def _get_proxy_pods() -> list[str]:
-    """Names of gateway proxy pods (all replicas of mcp-gateway)."""
+    """Names of gateway proxy pods (all replicas of agentregistry-gateway)."""
     rc, out, _ = run_kubectl(f"kubectl get pods -n {NAMESPACE} -o name")
     if rc != 0:
         return []

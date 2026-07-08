@@ -30,7 +30,7 @@ Change the port with `PORT=8600 ./run.sh`.
 ## Using it
 
 1. **Gateway address** (sidebar) is auto-detected from
-   `kubectl -n agentgateway-system get gateway mcp-gateway`. If detection fails
+   `kubectl -n agentgateway-system get gateway agentregistry-gateway`. If detection fails
    (e.g. kubectl isn't configured here), type the LoadBalancer IP/hostname in. The
    listener is HTTP/80, so leave **Port** blank.
 2. Pick an **Endpoint** (Solo Docs, DeepWiki, arXiv, FRED, or a custom path). Each is
@@ -58,5 +58,5 @@ This client speaks MCP over HTTP, so it only covers the **gateway-fronted** serv
 |---|---|
 | `Homepage.py` | Endpoint picker, sidebar address override, client + logs |
 | `mcp_client.py` | Vendored MCP-over-Streamable-HTTP widget (`render_mcp_client`) |
-| `cluster.py` | Gateway-address detection + gateway-log viewer (`mcp-gateway`) |
+| `cluster.py` | Gateway-address detection + gateway-log viewer (`agentregistry-gateway`) |
 | `run.sh` | venv bootstrap + launch |
