@@ -60,13 +60,13 @@ kubectl apply -f assets/mcp/agentgateway/parent-gateway-and-route.yaml
 **Wait for the Gateway to be programmed before you deploy anything to it** (see the gotcha in step 4):
 
 ```bash
-kubectl -n agentgateway-system get gateway mcp-gateway -w
+kubectl -n agentgateway-system get gateway agentregistry-gateway -w
 # Wait for PROGRAMMED=True and an ADDRESS, then Ctrl-C
 ```
 
 ```
-NAME                 CLASS                     ADDRESS          PROGRAMMED   AGE
-mcp-gateway   enterprise-agentgateway   172.18.255.250   True         20s
+NAME                    CLASS                     ADDRESS          PROGRAMMED   AGE
+agentregistry-gateway   enterprise-agentgateway   172.18.255.250   True         20s
 ```
 
 ## 2. Confirm the `Virtual` Runtime
@@ -147,7 +147,7 @@ You should see a child route `dep-default-solo-docs-remote-mcp-agw-<hash>` and a
 `mcp-default-solo-docs-remote-mcp` with `ACCEPTED=True`.
 
 The same state is visible in the Agentregistry UI (`http://<AR_IP>:12121`). The **Catalog** page
-lists the cataloged MCP server(s), and the **Gateways** page shows `mcp-gateway` discovered on the
+lists the cataloged MCP server(s), and the **Gateways** page shows `agentregistry-gateway` discovered on the
 `virtual-default` runtime:
 
 | Catalog | Gateways |
@@ -163,7 +163,7 @@ Instances** table showing `solo-docs-remote-mcp-agw` running on the `virtual` ru
 ## 6. Get the Gateway Address
 
 ```bash
-export AGW_ADDRESS=$(kubectl -n agentgateway-system get gateway mcp-gateway \
+export AGW_ADDRESS=$(kubectl -n agentgateway-system get gateway agentregistry-gateway \
   -o jsonpath='{.status.addresses[0].value}')
 echo "${AGW_ADDRESS}"
 ```
@@ -247,7 +247,7 @@ as `https://docs.solo.io/agentgateway/latest/mcp/auth/`. That round-trip (client
 arctl delete deployment solo-docs-remote-mcp-agw
 arctl delete mcp solo-docs-remote-mcp --tag latest
 kubectl -n agentgateway-system delete httproute remote-mcp-delegate
-kubectl -n agentgateway-system delete gateway   mcp-gateway
+kubectl -n agentgateway-system delete gateway   agentregistry-gateway
 ```
 
 Leave `Runtime/virtual-default` in place - it's the seeded default.

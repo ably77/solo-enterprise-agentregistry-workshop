@@ -4,8 +4,9 @@ When you grant a non-admin group `registry:publish` / `registry:edit`, those use
 catalog assets. A stricter setup requires an **admin approval** on every submission before it lands
 in the catalog. Agentregistry gates this with one Helm knob: `config.requireCreateApproval=true`.
 Once on, every `Agent`, `MCPServer`, `Skill`, and `Prompt` a non-admin submits goes into an
-**Administrative Request** queue that an admin approves (or rejects) via the UI or the `/v0/approve`
-HTTP API.
+**Administrative Requests** queue that an admin reviews with one of three methods: the AgentRegistry
+UI, curl against the `/v0/approve` HTTP API, or a custom integration built on that same API. The UI
+calls rejecting a request **Withdraw**.
 
 > **Scope:** approval gating covers catalog assets (`Agent`, `MCPServer`, `Skill`, `Prompt`).
 > `Deployment` resources are **not** approval-gated.
@@ -15,7 +16,7 @@ HTTP API.
 - Enable `config.requireCreateApproval=true`
 - Grant `are-readers` writer access
 - Submit an `Agent` as the non-admin `reader` and confirm it's staged, not committed
-- Approve it via the `/v0/approve` API
+- Approve it via one of three methods: the AgentRegistry UI, curl, or a custom integration
 - Verify the approved asset is in the catalog
 
 ## Pre-requisites
@@ -126,7 +127,22 @@ ARCTL_API_TOKEN=$(token_for reader) arctl get agent approval-test-agent --tag 1.
 # → Error: getting agent "approval-test-agent": resource not found
 ```
 
-## 4. List the Pending Request
+## 4. Approve the Pending Request
+
+Three ways to review and approve or reject a pending submission. All three operate
+on the same `/v0/approve` resource.
+
+### Method 1 (recommended): AgentRegistry UI
+
+Log in to the AgentRegistry UI as `admin` at `http://${AR_IP}:12121`. A 🔔 badge
+appears on the top-nav Notifications button once a request is pending. Open the
+**Catalog** page. The pending item shows up in an **Administrative Requests**
+panel above the catalog grid, with **Approve** and **Withdraw** buttons. Withdraw
+is the UI's name for reject.
+
+### Method 2: curl
+
+List the pending request:
 
 ```bash
 curl -s -H "Authorization: Bearer $(token_for reader)" \
@@ -137,9 +153,7 @@ curl -s -H "Authorization: Bearer $(token_for reader)" \
 { "kind": "Agent", "namespace": "default", "name": "approval-test-agent", "tag": "1.0.0", "state": "pending" }
 ```
 
-## 5. Approve It (as admin)
-
-Approval requires a superuser. POST the exact tuple from step 4:
+Approve it. This requires a superuser token, and the exact tuple from the list call:
 
 ```bash
 curl -s -X POST \
@@ -153,9 +167,15 @@ curl -s -X POST \
 { "results": [ { "kind": "Agent", "name": "approval-test-agent", "tag": "1.0.0", "status": "approved" } ] }
 ```
 
-> `action` also accepts `reject`, which removes the request without committing.
+> `action` also accepts `reject`, which removes the request without committing. The UI calls this **Withdraw**.
 
-## 6. Verify the Asset Is in the Catalog
+### Method 3: integrate into your own UI
+
+`/v0/approve` isn't special-cased to the product UI. Any internal tool can call it
+directly: `GET /v0/approve` for the pending list, then `POST /v0/approve` with
+`{"action": "approve" | "reject", "items": [...]}` for the selected tuples.
+
+## 5. Verify the Asset Is in the Catalog
 
 ```bash
 ARCTL_API_TOKEN=$(token_for admin) arctl get agent approval-test-agent --tag 1.0.0
