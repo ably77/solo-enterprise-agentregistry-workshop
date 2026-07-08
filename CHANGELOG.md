@@ -1,5 +1,9 @@
 # Changelog
 
+0.0.6 - (7-7-26)
+---
+- Updates to `labs/access-control/approval-workflows.md`. Add multiple methods of approving a registry addition (AR UI, curl, BYO UI)
+
 0.0.5 - (6-29-26)
 ---
 - Air-gap lab fixes:
