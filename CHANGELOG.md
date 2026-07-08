@@ -1,5 +1,10 @@
 # Changelog
 
+0.0.7 - (7-8-26)
+---
+- Added `labs/access-control/README.md` — Access Control section overview: the governance surface (catalog, OIDC identity, `AccessPolicy` RBAC, approval workflows, single gateway entry point, versioned assets) and the scope boundary between Registry asset governance and upstream AI/model governance
+- Linked the new overview as the first item under the Access Control section of `README.md`
+
 0.0.6 - (7-8-26)
 ---
 - Updates to `labs/access-control/approval-workflows.md`. Add multiple methods of approving a registry addition (AR UI, curl, BYO UI)
