@@ -20,6 +20,7 @@ you'll have:
 - Fronted those MCP servers with Enterprise Agentgateway behind a single endpoint, with many backends at distinct paths
 - Managed versioned `Prompt` catalog assets independently of agents
 - Published versioned `Skill` catalog assets with `arctl init`/`apply`, shipped a second tag, and pulled them as a consumer
+- Registered **AWS Bedrock AgentCore** as a cloud `Runtime` and deployed a Bedrock Claude-backed economic research agent to it straight from the catalog
 - Locked the catalog down with `AccessPolicy` RBAC and gated submissions behind admin approval workflows
 
 ![Agentregistry Enterprise catalog UI](assets/screenshots/05-are-ui-catalog.png)
@@ -34,6 +35,7 @@ you'll have:
 - [Installation](#installation)
 - [MCP (Model Context Protocol)](#mcp-model-context-protocol)
 - [Catalog](#catalog)
+- [Agent Runtimes](#agent-runtimes)
 - [Access Control](#access-control)
 
 ---
@@ -65,6 +67,10 @@ you'll have:
 - [Field RFE Skill](labs/catalog/field-rfe-skill.md) — scaffold a skill with `arctl init skill`, then publish a versioned `Skill` to the catalog with `arctl apply` and ship a second tag (no agent attach) (~8 min)
 - [Changelog Skill](labs/catalog/changelog-skill.md) — the same skill flow with the `/changelog` skill: publish, version, and `arctl pull` it as a consumer (~8 min)
 
+## Agent Runtimes
+
+- [AWS Bedrock AgentCore](labs/runtimes/aws-bedrock-agentcore.md) — register AgentCore as a cloud `Runtime` (cross-account IAM role via `arctl runtime setup` + CloudFormation) and deploy `econresearch`, a Bedrock Claude-backed economic research agent, from the catalog to AWS (~30 min; requires an AWS account with Bedrock model access)
+
 ## Access Control
 
 - [Overview — What the Registry Governs](labs/access-control/README.md) — the governance surface (RBAC, approvals, identity) and where the Registry's scope ends and model/AI governance begins
@@ -80,6 +86,7 @@ you'll have:
 - Expose remote and in-cluster MCP servers through Enterprise Agentgateway via a `Virtual` runtime — one gateway endpoint, many backends at distinct paths, with gateway-managed TLS to the upstream
 - Manage versioned `Prompt` catalog assets independently of agents
 - Publish versioned `Skill` catalog assets (`arctl init`/`apply`), ship a second tag, and `arctl pull` them as a consumer
+- Register AWS Bedrock AgentCore as a cloud `Runtime` and deploy a catalog `Agent` to it — registry-built image from Git source, verified in the UI and CloudWatch
 - Enforce catalog RBAC with `AccessPolicy` against Keycloak group names
 - Gate catalog submissions behind admin approval and approve/reject via the `/v0/approve` API
 
@@ -107,6 +114,8 @@ fe-enterprise-agentregistry-workshop/
 │   │   ├── prompts.md
 │   │   ├── field-rfe-skill.md         # Skill catalog asset (field-rfe example)
 │   │   └── changelog-skill.md         # Skill catalog asset (/changelog example)
+│   ├── runtimes/
+│   │   └── aws-bedrock-agentcore.md   # AgentCore cloud runtime + econresearch agent
 │   └── access-control/
 │       ├── access-policies.md
 │       └── approval-workflows.md
@@ -114,6 +123,10 @@ fe-enterprise-agentregistry-workshop/
 │   ├── keycloak/                        # kustomize stack: deployment + agentregistry-enterprise.json (--import-realm)
 │   ├── prompts/                         # Prompt manifest
 │   ├── skills/                          # field-rfe + changelog SKILL.md (publishable skill sources)
+│   ├── agents/
+│   │   └── econresearch/                # Bedrock Claude economic research agent (ADK, Git source)
+│   ├── runtimes/
+│   │   └── agentcore/                   # IAM policies for the registry's AWS access
 │   └── mcp/
 │       ├── demo-mcp/                    # stdio MCP source (server.py) + manifest
 │       ├── playwright/                  # package-based (npm) stdio MCP manifest

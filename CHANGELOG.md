@@ -1,5 +1,12 @@
 # Changelog
 
+0.0.8 - (7-9-26)
+---
+- Added AWS Bedrock AgentCore runtime lab at `labs/runtimes/aws-bedrock-agentcore.md`: The lab teaches the external dependencies from zero (step 0): operator AWS CLI setup, region choice, Bedrock model access enablement, and the two-identity model (operator vs registry deployer credentials + cross-account role)
+- Added `assets/agents/econresearch/` — a new vertical-use-case agent (FSI economic research assistant): Google ADK Python on Bedrock Claude (`us.anthropic.claude-sonnet-4-6`) with tools over a curated FRED-style indicator snapshot
+- Added `assets/runtimes/agentcore/` — the two IAM policies the registry server needs for AgentCore (from the docs quickstart)
+- New **Agent Runtimes** section in `README.md` (TOC, use cases, repo layout updated)
+
 0.0.7 - (7-8-26)
 ---
 - Added `labs/access-control/README.md` — Access Control section overview: the governance surface (catalog, OIDC identity, `AccessPolicy` RBAC, approval workflows, single gateway entry point, versioned assets) and the scope boundary between Registry asset governance and upstream AI/model governance

@@ -46,3 +46,9 @@ node_modules/
 # Temporary files
 tmp/
 temp/
+
+# Agent session scratch (task briefs, review packages, progress ledger)
+.superpowers/
+
+# Design specs / implementation plans (working docs, not workshop content)
+/docs/
