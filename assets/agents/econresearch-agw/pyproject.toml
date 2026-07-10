@@ -1,0 +1,17 @@
+[project]
+name = "econresearch-agw"
+version = "0.1"
+description = "econresearch-agw agent"
+readme = "README.md"
+dependencies = [
+  # Pin to match the solo-io/agentregistry-dev-samples reference template
+  # (and the econresearch sibling agent).
+  "google-adk==1.25.1",
+  # google-adk ships the LiteLlm wrapper but litellm itself is an optional
+  # dependency (the [extensions] extra). Declare it directly, mirroring the
+  # extra's pin, so `uv sync` works the same locally and in the kagent-adk
+  # image build. Unlike econresearch, no anthropic dependency: the
+  # OpenAI-protocol path needs no custom adapter (see agent.py).
+  "litellm>=1.75.5,<1.80.17",
+]
+requires-python = ">=3.13"

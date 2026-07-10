@@ -1,9 +1,10 @@
 # Create Agents
 
-> **AWS Bedrock AgentCore series, Part 2 of 3**
+> **AWS Bedrock AgentCore series, Part 2 of 4**
 > [Part 1: Integrate Agentregistry and AgentCore](agentcore-01-integration.md) ·
 > **Part 2: Create Agents** (this lab) ·
-> [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md)
+> [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md) ·
+> [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md)
 
 This lab walks through how the workshop's four vertical-use-case agents were created. The same
 recipe, applied four times:
@@ -171,3 +172,6 @@ entries and deploying, which is [Part 3](agentcore-03-deploy-agents.md).
 - [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md): publish
   `econresearch` to the catalog, deploy it to the `agentcore` Runtime from Part 1, chat with it
   in the registry UI, and tail its CloudWatch logs, then do the same for the other three agents.
+- [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md): the same
+  agent recipe with the Bedrock adapter swapped for an OpenAI model behind Agentgateway, and
+  the snapshot swapped for the live FRED MCP server.

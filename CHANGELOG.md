@@ -1,5 +1,10 @@
 # Changelog
 
+0.0.9 - (7-9-26)
+---
+- Added `labs/runtimes/agentcore-04-agentgateway-llm-mcp.md` — Part 4 of the AgentCore series: extend `econresearch` into `econresearch-agw`, with LLM calls (OpenAI `gpt-5.4-nano` via an Agentgateway `/openai` route, key in a k8s `Secret` at the gateway) and live FRED data (FRED MCP server via `spec.mcpServers` + `deploymentRefs`) both routed through the workshop's Agentgateway; requires a publicly reachable gateway LB
+- Added `assets/mcp/agentgateway/openai-backend-and-route.yaml` — unpinned OpenAI `AgentgatewayBackend` + `/openai` `HTTPRoute` on the shared `agentregistry-gateway` (expects an `openai-secret` created imperatively, never checked in)
+
 0.0.8 - (7-9-26)
 ---
 - Added a three-part AWS Bedrock AgentCore lab series at `labs/runtimes/`:
