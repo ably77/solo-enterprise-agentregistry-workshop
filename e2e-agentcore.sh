@@ -267,11 +267,12 @@ EOF
 # Rerun-safe: arctl apply of an existing Agent/Deployment is a no-op
 # ("unchanged") and the deployed-state poll passes immediately.
 # =============================================================================
-# Deployed-state probe: AgentCore deployments report a "deployed" state/
-# condition; filter out "deploying" lines first so the in-progress state
-# never false-positives.
+# Deployed-state probe: AgentCore deployments never emit a literal "deployed"
+# token — success is the Ready condition flipping to True (reason: Completed,
+# message: "deployment completed") — so match the type/status pair via JSON.
 _agentcore_dep_deployed() {
-  _arctl get deployment "$1" -o yaml 2>/dev/null | grep -vi 'deploying' | grep -qiE '\bdeployed\b'
+  _arctl get deployment "$1" -o json 2>/dev/null \
+    | jq -e '[.status.conditions[]? | select(.type == "Ready" and .status == "True")] | length > 0' >/dev/null 2>&1
 }
 
 agentcore_deploy() {
