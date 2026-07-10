@@ -1,0 +1,19 @@
+{
+  "name": "bankingsupport",
+  "description": "Personal banking support assistant — answers questions about account balances and recent transactions from a curated snapshot.",
+  "url": "http://localhost:8080",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": true
+  },
+  "defaultInputModes": ["text"],
+  "defaultOutputModes": ["text"],
+  "skills": [
+    {
+      "id": "banking-support",
+      "name": "Banking Support",
+      "description": "Look up personal banking account summaries (balance, type, status) and recent transactions from a curated snapshot, with account IDs cited.",
+      "tags": ["banking", "finance", "support"]
+    }
+  ]
+}

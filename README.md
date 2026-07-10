@@ -20,6 +20,7 @@ you'll have:
 - Fronted those MCP servers with Enterprise Agentgateway behind a single endpoint, with many backends at distinct paths
 - Managed versioned `Prompt` catalog assets independently of agents
 - Published versioned `Skill` catalog assets with `arctl init`/`apply`, shipped a second tag, and pulled them as a consumer
+- Registered **AWS Bedrock AgentCore** as a cloud `Runtime` and deployed a Bedrock Claude-backed economic research agent to it straight from the catalog
 - Locked the catalog down with `AccessPolicy` RBAC and gated submissions behind admin approval workflows
 
 ![Agentregistry Enterprise catalog UI](assets/screenshots/05-are-ui-catalog.png)
@@ -34,6 +35,7 @@ you'll have:
 - [Installation](#installation)
 - [MCP (Model Context Protocol)](#mcp-model-context-protocol)
 - [Catalog](#catalog)
+- [Agent Runtimes](#agent-runtimes)
 - [Access Control](#access-control)
 
 ---
@@ -65,6 +67,14 @@ you'll have:
 - [Field RFE Skill](labs/catalog/field-rfe-skill.md) — scaffold a skill with `arctl init skill`, then publish a versioned `Skill` to the catalog with `arctl apply` and ship a second tag (no agent attach) (~8 min)
 - [Changelog Skill](labs/catalog/changelog-skill.md) — the same skill flow with the `/changelog` skill: publish, version, and `arctl pull` it as a consumer (~8 min)
 
+## Agent Runtimes
+
+A three-part **AWS Bedrock AgentCore** series (requires an AWS account you can administer):
+
+- [Part 1 — Integrate Agentregistry and AgentCore](labs/runtimes/agentcore-01-integration.md) — build the AWS side from zero (CLI, operator auth, Bedrock model availability), grant the registry AWS access, generate the cross-account IAM role via `arctl runtime setup` + CloudFormation, and register the `agentcore` Runtime
+- [Part 2 — Create Agents](labs/runtimes/agentcore-02-create-agents.md) — how the four vertical-use-case agents were built: the `arctl init agent` ADK/Bedrock scaffold, one customized `agent.py` (snapshot data + function tools + grounding instruction), and the Git-sourced catalog entry — all four already checked in under `assets/agents/` (no AWS needed)
+- [Part 3 — Register and Deploy Agents to AgentCore](labs/runtimes/agentcore-03-deploy-agents.md) — publish `econresearch` (a Bedrock Claude-backed economic research agent) to the catalog, deploy it to AgentCore, chat from the UI and tail CloudWatch — then deploy [`claimsupport`](assets/agents/claimsupport/), [`bankingsupport`](assets/agents/bankingsupport/), and [`ithelpdesk`](assets/agents/ithelpdesk/) the same way
+
 ## Access Control
 
 - [Overview — What the Registry Governs](labs/access-control/README.md) — the governance surface (RBAC, approvals, identity) and where the Registry's scope ends and model/AI governance begins
@@ -80,6 +90,7 @@ you'll have:
 - Expose remote and in-cluster MCP servers through Enterprise Agentgateway via a `Virtual` runtime — one gateway endpoint, many backends at distinct paths, with gateway-managed TLS to the upstream
 - Manage versioned `Prompt` catalog assets independently of agents
 - Publish versioned `Skill` catalog assets (`arctl init`/`apply`), ship a second tag, and `arctl pull` them as a consumer
+- Register AWS Bedrock AgentCore as a cloud `Runtime` and deploy catalog `Agent`s to it — registry-built image from Git source, verified in the UI and CloudWatch; four example agents ship in the catalog (`econresearch`, `claimsupport`, `bankingsupport`, `ithelpdesk`) covering FSI research, insurance, banking, and IT helpdesk use cases
 - Enforce catalog RBAC with `AccessPolicy` against Keycloak group names
 - Gate catalog submissions behind admin approval and approve/reject via the `/v0/approve` API
 
@@ -107,6 +118,10 @@ fe-enterprise-agentregistry-workshop/
 │   │   ├── prompts.md
 │   │   ├── field-rfe-skill.md         # Skill catalog asset (field-rfe example)
 │   │   └── changelog-skill.md         # Skill catalog asset (/changelog example)
+│   ├── runtimes/
+│   │   ├── agentcore-01-integration.md   # wire the registry to AWS + register the Runtime
+│   │   ├── agentcore-02-create-agents.md # how the ADK/Bedrock example agents were built
+│   │   └── agentcore-03-deploy-agents.md # publish + deploy to AgentCore, chat, CloudWatch
 │   └── access-control/
 │       ├── access-policies.md
 │       └── approval-workflows.md
@@ -114,6 +129,10 @@ fe-enterprise-agentregistry-workshop/
 │   ├── keycloak/                        # kustomize stack: deployment + agentregistry-enterprise.json (--import-realm)
 │   ├── prompts/                         # Prompt manifest
 │   ├── skills/                          # field-rfe + changelog SKILL.md (publishable skill sources)
+│   ├── agents/                          # four ADK/Bedrock example agents (Git source):
+│   │   └── ...                          #   econresearch, claimsupport, bankingsupport, ithelpdesk
+│   ├── runtimes/
+│   │   └── agentcore/                   # IAM policies for the registry's AWS access
 │   └── mcp/
 │       ├── demo-mcp/                    # stdio MCP source (server.py) + manifest
 │       ├── playwright/                  # package-based (npm) stdio MCP manifest

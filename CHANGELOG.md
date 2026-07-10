@@ -1,5 +1,14 @@
 # Changelog
 
+0.0.8 - (7-9-26)
+---
+- Added a three-part AWS Bedrock AgentCore lab series at `labs/runtimes/`:
+  - `agentcore-01-integration.md` — teaches the external dependencies from zero (step 0): operator AWS CLI setup, region choice, Bedrock model availability, and the two-identity model (operator vs registry deployer credentials + cross-account role); registers the `agentcore` Runtime
+  - `agentcore-02-create-agents.md` — high-level walkthrough of how the four example agents were created (`arctl init agent` ADK/Bedrock scaffold, one customized `agent.py`, Git-sourced catalog entry); the agents are already checked in, so no push-to-GitHub step
+  - `agentcore-03-deploy-agents.md` — publish + deploy `econresearch` (and the three other agents) to AgentCore, chat from the UI, tail CloudWatch; deploy-scoped troubleshooting and cleanup
+- New **Agent Runtimes** section in `README.md` (TOC, use cases, repo layout updated)
+- Added three agent examples in `assets/agents/` — `claimsupport`, `bankingsupport`, and `ithelpdesk`, insurance claim, personal banking, and IT helpdesk support assistants matching econresearch's ADK/Bedrock scaffold, wired into the AgentCore labs and README
+
 0.0.7 - (7-8-26)
 ---
 - Added `labs/access-control/README.md` — Access Control section overview: the governance surface (catalog, OIDC identity, `AccessPolicy` RBAC, approval workflows, single gateway entry point, versioned assets) and the scope boundary between Registry asset governance and upstream AI/model governance
