@@ -4,7 +4,8 @@
 > [Part 1: Integrate Agentregistry and AgentCore](agentcore-01-integration.md) ·
 > [Part 2: Create Agents](agentcore-02-create-agents.md) ·
 > **Part 3: Register and Deploy Agents to AgentCore** (this lab) ·
-> [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md)
+> [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md) ·
+> [Cleanup](agentcore-cleanup.md)
 
 Publish the **`econresearch`** agent to the catalog and deploy it to the `agentcore` Runtime you
 registered in Part 1. Agentregistry clones the agent source from GitHub, builds the
@@ -13,8 +14,8 @@ AgentCore-compatible image, hands it to AgentCore, and you watch the Deployment 
 logs, and deploy the other three vertical agents from Part 2 the same way.
 
 > **Cost note:** this lab creates real AWS resources (an AgentCore runtime, an ECR/S3-backed
-> image build, CloudWatch logs) and invokes a Bedrock model. Costs are small but non-zero; the
-> Cleanup section removes everything.
+> image build, CloudWatch logs) and invokes a Bedrock model. Costs are small but non-zero; see
+> [Cleanup](agentcore-cleanup.md) to remove everything.
 
 ## Lab Objectives
 
@@ -242,26 +243,11 @@ Chat with each from the **Instances** view (`http://${AR_IP}:12121/are/instances
 
 ## Cleanup
 
-Remove the deployments and catalog entries this lab created:
-
-```bash
-arctl delete deployment econresearch
-arctl delete agent econresearch --tag 1.0.0
-arctl delete deployment claimsupport
-arctl delete agent claimsupport --tag 1.0.0
-arctl delete deployment bankingsupport
-arctl delete agent bankingsupport --tag 1.0.0
-arctl delete deployment ithelpdesk
-arctl delete agent ithelpdesk --tag 1.0.0
-```
-
-> AgentCore also leaves behind each runtime's CloudWatch log group; remove them with
-> `aws logs delete-log-group --log-group-name "/aws/bedrock-agentcore/runtimes/<runtime-id>-DEFAULT" --region "${AWS_REGION}"`
-> if you want a fully clean account.
-
-Then, to tear down the integration itself (the `agentcore` Runtime, the cross-account role
-stack, the `agentregistry-deployer` IAM user, and the `aws.*` helm values), run
-[Part 1's Cleanup](agentcore-01-integration.md#cleanup).
+See the
+["If you completed Part 3"](agentcore-cleanup.md#if-you-completed-part-3-register-and-deploy-agents-to-agentcore)
+section of the consolidated [Cleanup](agentcore-cleanup.md) guide to remove the deployments and
+catalog entries this lab created. Do that before tearing down Part 1's integration — a Deployment
+can't outlive the Runtime it targets.
 
 ## Next
 

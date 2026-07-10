@@ -17,9 +17,14 @@ spec:
   description: "Economic research assistant with live FRED data - LLM calls (OpenAI gpt-5.4-nano) and FRED MCP tool calls both routed through Agentgateway"
   modelName: gpt-5.4-nano
   modelProvider: openai
+  # fred-gateway-mcp is an agent-facing catalog entry whose remote URL is the
+  # public gateway route (http://<your-gateway>/registry/fred); the lab creates
+  # it inline since the address is per-user. Remote MCPServers are injected
+  # into MCP_SERVERS_CONFIG by catalog URL with no deploymentRefs needed (the
+  # registry currently rejects deploymentRefs that resolve to remote MCPs).
   mcpServers:
     - kind: MCPServer
-      name: fred-incluster-mcp
+      name: fred-gateway-mcp
   source:
     image: localhost:5001/econresearch-agw:latest
     repository:

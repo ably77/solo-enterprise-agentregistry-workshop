@@ -1,8 +1,14 @@
 # Changelog
 
+0.1.0 - (7-10-26)
+---
+- Added `labs/runtimes/agentcore-cleanup.md` — consolidated teardown for all four AgentCore labs; each lab's inline Cleanup section now points here instead of repeating commands, with breadcrumb nav and cost-note cross-references updated across `agentcore-01/02/03/04-*.md` and `README.md` (Agent Runtimes list + repo layout tree)
+- `agentcore-01-integration.md`: prefix every fixed-name AWS resource with `AR_USER_PREFIX=$(whoami)` — IAM policies, deployer user, cross-account role (via `--role-name`), CloudFormation stack — so concurrent installs in a shared AWS account don't collide on the same names; added a guarded `sed` patch for the trust policy principal (`arctl` exposes no flag for it) and updated `agentcore-cleanup.md`'s Part 1 teardown and shared-account callout to match
+- Fixes to `/labs/runtimes/agentcore-04-agentgateway-llm-mcp.md`
+
 0.0.9 - (7-9-26)
 ---
-- Added `labs/runtimes/agentcore-04-agentgateway-llm-mcp.md` — Part 4 of the AgentCore series: extend `econresearch` into `econresearch-agw`, with LLM calls (OpenAI `gpt-5.4-nano` via an Agentgateway `/openai` route, key in a k8s `Secret` at the gateway) and live FRED data (FRED MCP server via `spec.mcpServers` + `deploymentRefs`) both routed through the workshop's Agentgateway; requires a publicly reachable gateway LB
+- Added `labs/runtimes/agentcore-04-agentgateway-llm-mcp.md` — Part 4 of the AgentCore series: extend `econresearch` into `econresearch-agw`, with LLM calls (OpenAI `gpt-5.4-nano` via an Agentgateway `/openai` route, key in a k8s `Secret` at the gateway) and live FRED data (via `spec.mcpServers` and an agent-facing `fred-gateway-mcp` catalog entry carrying the public gateway URL — the registry rejects `deploymentRefs` to remote MCPs with `ErrMCPSetMismatch`) both routed through the workshop's Agentgateway; requires a publicly reachable gateway LB. The agent ships a `requirements.txt` pinning `litellm` because the AgentCore builder installs from it and ignores `Dockerfile`/`pyproject.toml`
 - Added `assets/mcp/agentgateway/openai-backend-and-route.yaml` — unpinned OpenAI `AgentgatewayBackend` + `/openai` `HTTPRoute` on the shared `agentregistry-gateway` (expects an `openai-secret` created imperatively, never checked in)
 
 0.0.8 - (7-9-26)

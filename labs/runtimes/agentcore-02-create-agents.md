@@ -4,7 +4,8 @@
 > [Part 1: Integrate Agentregistry and AgentCore](agentcore-01-integration.md) ·
 > **Part 2: Create Agents** (this lab) ·
 > [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md) ·
-> [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md)
+> [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md) ·
+> [Cleanup](agentcore-cleanup.md)
 
 This lab walks through how the workshop's four vertical-use-case agents were created. The same
 recipe, applied four times:

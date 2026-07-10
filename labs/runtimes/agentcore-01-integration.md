@@ -4,7 +4,8 @@
 > **Part 1: Integrate Agentregistry and AgentCore** (this lab) ·
 > [Part 2: Create Agents](agentcore-02-create-agents.md) ·
 > [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md) ·
-> [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md)
+> [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md) ·
+> [Cleanup](agentcore-cleanup.md)
 
 Wire agentregistry to **AWS Bedrock AgentCore**: build the AWS side from zero, grant the registry
 server AWS access, generate the cross-account IAM role it assumes at deploy time, and register
@@ -17,7 +18,8 @@ runtime** in your AWS account through a scoped cross-account IAM role.
 
 > **Cost note:** this part creates only IAM principals and a CloudFormation stack, none of which
 > bill on their own. The resources that cost money (the AgentCore runtime, image builds,
-> CloudWatch logs, Bedrock invocations) appear in Part 3, and its Cleanup removes them.
+> CloudWatch logs, Bedrock invocations) appear in Part 3; [Cleanup](agentcore-cleanup.md) removes
+> everything for the whole series.
 
 ## Lab Objectives
 
@@ -50,6 +52,9 @@ source ~/.are-keycloak-env
 export AR_IP=$(kubectl get svc agentregistry-enterprise-server -n agentregistry-system \
   -o jsonpath='{.status.loadBalancer.ingress[0].ip}{.status.loadBalancer.ingress[0].hostname}')
 export ARCTL_API_BASE_URL="http://${AR_IP}:12121"
+
+export AR_USER_PREFIX=$(whoami)   # keeps this lab's AWS resource names unique per person
+                                   # if you're sharing an AWS account with teammates
 ```
 
 ## Architecture
@@ -222,10 +227,14 @@ credentials via `helm upgrade`.
 
 **This lab builds a two-identity model:**
 
-1. A **base identity**: the `agentregistry-deployer` IAM user with long-lived access keys. These
-   keys are what the server pod actually holds (delivered as helm `aws.*` values). On their own
-   they can do almost nothing privileged: the whole point of the base identity is to be a
-   *starting principal* whose only real job is to call `sts:AssumeRole`.
+1. A **base identity**: the `${AR_USER_PREFIX}-agentregistry-deployer` IAM user with long-lived
+   access keys. These keys are what the server pod actually holds (delivered as helm `aws.*`
+   values). On their own they can do almost nothing privileged: the whole point of the base
+   identity is to be a *starting principal* whose only real job is to call `sts:AssumeRole`.
+   Every fixed name this lab creates gets your `AR_USER_PREFIX` prepended — if you're in a
+   personal AWS account this is cosmetic, but in a **shared account** (a team sandbox, say) it's
+   what stops your setup and a teammate's from colliding on the same IAM user, policies, or
+   CloudFormation stack.
 2. A **cross-account role** (Step 2) that carries the real AgentCore permissions. The server
    assumes this role at deploy time to get short-lived credentials.
 
@@ -240,15 +249,16 @@ account). Same handshake either way; this lab just keeps both in one account for
 > works from any Kubernetes cluster.
 
 Create the two IAM policies (checked in at `assets/runtimes/agentcore/`, verbatim from the
-[docs quickstart](https://docs.solo.io/agentregistry/latest/quickstart/agentcore/)):
+[docs quickstart](https://docs.solo.io/agentregistry/latest/quickstart/agentcore/), with your
+`AR_USER_PREFIX` on the name so they don't collide with a teammate's copy in a shared account):
 
 ```bash
 aws iam create-policy \
-  --policy-name AgentRegistryGeneralAccess \
+  --policy-name "${AR_USER_PREFIX}-AgentRegistryGeneralAccess" \
   --policy-document file://assets/runtimes/agentcore/general-access-policy.json
 
 aws iam create-policy \
-  --policy-name AgentRegistryBedrockAgentCoreAccess \
+  --policy-name "${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccess" \
   --policy-document file://assets/runtimes/agentcore/bedrock-agentcore-policy.json
 ```
 
@@ -273,20 +283,22 @@ aws iam create-policy \
   `*BedrockAgentCore*`, so the deployer can pass roles **only** to AgentCore, never to EC2,
   Lambda, or anything else it might otherwise use to escalate.
 
-Create the `agentregistry-deployer` IAM user, attach both policies, and mint an access key:
+Create the deployer IAM user, attach both policies, and mint an access key:
 
 ```bash
-aws iam create-user --user-name agentregistry-deployer
+export AR_DEPLOYER_USER="${AR_USER_PREFIX}-agentregistry-deployer"
+
+aws iam create-user --user-name "${AR_DEPLOYER_USER}"
 
 aws iam attach-user-policy \
-  --user-name agentregistry-deployer \
-  --policy-arn arn:aws:iam::${AWS_ACCOUNT_ID}:policy/AgentRegistryGeneralAccess
+  --user-name "${AR_DEPLOYER_USER}" \
+  --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${AR_USER_PREFIX}-AgentRegistryGeneralAccess"
 
 aws iam attach-user-policy \
-  --user-name agentregistry-deployer \
-  --policy-arn arn:aws:iam::${AWS_ACCOUNT_ID}:policy/AgentRegistryBedrockAgentCoreAccess
+  --user-name "${AR_DEPLOYER_USER}" \
+  --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccess"
 
-ACCESS_KEY_OUTPUT=$(aws iam create-access-key --user-name agentregistry-deployer)
+ACCESS_KEY_OUTPUT=$(aws iam create-access-key --user-name "${AR_DEPLOYER_USER}")
 export AR_AWS_ACCESS_KEY_ID=$(echo "$ACCESS_KEY_OUTPUT" | jq -r '.AccessKey.AccessKeyId')
 export AR_AWS_SECRET_ACCESS_KEY=$(echo "$ACCESS_KEY_OUTPUT" | jq -r '.AccessKey.SecretAccessKey')
 ```
@@ -294,6 +306,8 @@ export AR_AWS_SECRET_ACCESS_KEY=$(echo "$ACCESS_KEY_OUTPUT" | jq -r '.AccessKey.
 > The deployer keys are captured under `AR_`-prefixed names on purpose: exporting them as
 > `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` would override your own credentials for every
 > later `aws` command in this shell, and the deployer can't create IAM roles or delete stacks.
+> `AR_DEPLOYER_USER` is re-derived from `AR_USER_PREFIX` (i.e. `$(whoami)`), so a fresh shell
+> reproduces the same name without needing to persist it anywhere.
 
 Add the AWS settings to the registry install (all baseline values are preserved via
 `--reuse-values`):
@@ -325,10 +339,16 @@ old environment). If a pod ever predates the change, the Troubleshooting row bel
 
 `arctl` generates a CloudFormation template for the role agentregistry assumes to drive
 AgentCore, covering the Bedrock AgentCore APIs, IAM (per-agent execution roles), S3 (code
-artifacts), and CloudWatch Logs:
+artifacts), and CloudWatch Logs. `--role-name` is the one piece of this `arctl` lets you
+parameterize, so give it a prefixed name too:
 
 ```bash
-arctl runtime setup bedrock-agent-core --aws-account-id "${AWS_ACCOUNT_ID}" > /tmp/agentregistry-cf.yaml
+export AR_ROLE_NAME="${AR_USER_PREFIX}-AgentRegistryAccessRole"
+
+arctl runtime setup bedrock-agent-core \
+  --aws-account-id "${AWS_ACCOUNT_ID}" \
+  --role-name "${AR_ROLE_NAME}" \
+  > /tmp/agentregistry-cf.yaml
 ```
 
 **The handshake this sets up.** The generated role has two halves: a *permission policy* (what the
@@ -355,17 +375,40 @@ Condition:
     sts:ExternalId: "<generated-external-id>"
 ```
 
+> **The trust policy's principal isn't parameterized by `arctl`** — unlike `--role-name`, there's
+> no flag for the deployer username, so the generated template always trusts the literal
+> `agentregistry-deployer` principal (as shown above), regardless of what you actually named your
+> Step 1 user. Since this lab renamed that user to `${AR_DEPLOYER_USER}`, patch the template
+> before applying it, or `AssumeRole` will reject your deployer as an untrusted principal:
+>
+> ```bash
+> grep -q "user/agentregistry-deployer" /tmp/agentregistry-cf.yaml || {
+>   echo "ERROR: expected principal 'agentregistry-deployer' not found in the generated" >&2
+>   echo "template — arctl's output may have changed shape; inspect the file by hand" >&2
+>   echo "before applying it: /tmp/agentregistry-cf.yaml" >&2
+>   exit 1
+> }
+> sed -i '' "s#user/agentregistry-deployer#user/${AR_DEPLOYER_USER}#" /tmp/agentregistry-cf.yaml
+> # GNU sed (Linux): drop the '' after -i
+> ```
+>
+> The `grep -q` guard is there on purpose: if a future `arctl` version changes the template's
+> shape, this fails loudly instead of silently deploying a role that still trusts someone else's
+> `agentregistry-deployer` user.
+
 Deploy the stack and wait for it to complete (~1 minute):
 
 ```bash
+export AR_STACK_NAME="${AR_USER_PREFIX}-agentregistry-access-role"
+
 aws cloudformation create-stack \
-  --stack-name agentregistry-access-role \
+  --stack-name "${AR_STACK_NAME}" \
   --template-body file:///tmp/agentregistry-cf.yaml \
   --capabilities CAPABILITY_NAMED_IAM \
   --region "${AWS_REGION}"
 
 aws cloudformation wait stack-create-complete \
-  --stack-name agentregistry-access-role \
+  --stack-name "${AR_STACK_NAME}" \
   --region "${AWS_REGION}"
 ```
 
@@ -379,11 +422,11 @@ Capture the role ARN and external ID from the stack outputs:
 
 ```bash
 export AWS_ROLE_ARN=$(aws cloudformation describe-stacks \
-  --stack-name agentregistry-access-role --region "${AWS_REGION}" \
+  --stack-name "${AR_STACK_NAME}" --region "${AWS_REGION}" \
   --query "Stacks[0].Outputs[?OutputKey=='RoleArn'].OutputValue" --output text)
 
 export AWS_EXTERNAL_ID=$(aws cloudformation describe-stacks \
-  --stack-name agentregistry-access-role --region "${AWS_REGION}" \
+  --stack-name "${AR_STACK_NAME}" --region "${AWS_REGION}" \
   --query "Stacks[0].Outputs[?OutputKey=='ExternalId'].OutputValue" --output text)
 
 echo "AWS_ROLE_ARN=${AWS_ROLE_ARN}"
@@ -459,56 +502,11 @@ Deployment condition in [Part 3](agentcore-03-deploy-agents.md#troubleshooting).
 ## Cleanup
 
 If you're continuing to [Part 2](agentcore-02-create-agents.md) or
-[Part 3](agentcore-03-deploy-agents.md), **skip this section**; everything below is what those
-labs build on. Run it only to return the cluster and the AWS account to the baseline. If you
-deployed agents in Part 3, run [Part 3's Cleanup](agentcore-03-deploy-agents.md#cleanup)
-first: Deployments must be deleted before the Runtime they target.
-
-> Running Cleanup in a fresh shell? Re-run the Pre-requisites shell context and step 0.3
-> (`AWS_REGION`, `AWS_ACCOUNT_ID`) first, and recover the deployer's access-key ID with
-> `aws iam list-access-keys --user-name agentregistry-deployer`, exporting it as
-> `AR_AWS_ACCESS_KEY_ID` before running the IAM cleanup block.
-
-```bash
-# Registry side: the runtime
-arctl delete runtime agentcore
-
-# AWS side: the cross-account role stack
-aws cloudformation delete-stack \
-  --stack-name agentregistry-access-role \
-  --region "${AWS_REGION}"
-aws cloudformation wait stack-delete-complete \
-  --stack-name agentregistry-access-role \
-  --region "${AWS_REGION}"
-
-# AWS side: the registry's IAM user + policies
-aws iam delete-access-key --user-name agentregistry-deployer \
-  --access-key-id "${AR_AWS_ACCESS_KEY_ID}"
-aws iam detach-user-policy --user-name agentregistry-deployer \
-  --policy-arn arn:aws:iam::${AWS_ACCOUNT_ID}:policy/AgentRegistryGeneralAccess
-aws iam detach-user-policy --user-name agentregistry-deployer \
-  --policy-arn arn:aws:iam::${AWS_ACCOUNT_ID}:policy/AgentRegistryBedrockAgentCoreAccess
-aws iam delete-user --user-name agentregistry-deployer
-aws iam delete-policy \
-  --policy-arn arn:aws:iam::${AWS_ACCOUNT_ID}:policy/AgentRegistryGeneralAccess
-aws iam delete-policy \
-  --policy-arn arn:aws:iam::${AWS_ACCOUNT_ID}:policy/AgentRegistryBedrockAgentCoreAccess
-
-# Cluster side: drop the aws.* helm values (re-applies the 001 baseline values;
-# if /tmp/are-values.yaml is gone, recreate it from 001 step 4 first)
-helm upgrade agentregistry-enterprise \
-  oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.6.2 \
-  --namespace agentregistry-system \
-  -f /tmp/are-values.yaml \
-  --wait --timeout 5m
-kubectl rollout restart deployment/agentregistry-enterprise-server -n agentregistry-system
-kubectl rollout status  deployment/agentregistry-enterprise-server -n agentregistry-system
-
-# Local temp files + env vars
-rm -f /tmp/agentregistry-cf.yaml /tmp/agentcore-runtime.yaml
-unset AWS_ACCOUNT_ID AWS_REGION AWS_ROLE_ARN AWS_EXTERNAL_ID AR_AWS_ACCESS_KEY_ID AR_AWS_SECRET_ACCESS_KEY
-```
+[Part 3](agentcore-03-deploy-agents.md), **skip this section**; everything this lab built is what
+those labs run on. When you're done with the whole series, tear it down with the
+["If you completed Part 1"](agentcore-cleanup.md#if-you-completed-part-1-integrate-agentregistry-and-agentcore)
+section of the consolidated [Cleanup](agentcore-cleanup.md) guide — run it **last**, after any
+Part 3/4 deployments are gone, since a Deployment can't outlive the Runtime it targets.
 
 ## Next
 

@@ -1,0 +1,9 @@
+# The AgentCore deploy path installs from requirements.txt only — the
+# checked-in Dockerfile and pyproject.toml are NOT used there (the registry
+# generates its own wrapper and appends its default deps — kagent-adk,
+# google-adk, boto3, a2a-sdk — to this file at build time). pyproject.toml
+# still drives local runs (`uv sync`) and kagent-image builds.
+#
+# litellm is the one dependency the builder's defaults don't cover; same pin
+# as pyproject.toml (mirrors google-adk's [extensions] extra).
+litellm>=1.75.5,<1.80.17
