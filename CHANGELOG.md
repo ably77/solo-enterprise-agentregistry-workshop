@@ -1,5 +1,9 @@
 # Changelog
 
+0.1.3 - (7-10-26)
+---
+- Fix to `e2e-agentcore.sh`
+
 0.1.2 - (7-10-26)
 ---
 - Added an opt-in AgentCore e2e mode (`./e2e-test.sh agentcore` / `agentcore-cleanup` / `--include-agentcore`): new `e2e-agentcore.sh` module automating the AgentCore labs Parts 1 + 3, plus optional gitignored `./secrets` sourcing and a billing banner for left-running AWS resources
