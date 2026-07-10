@@ -12,6 +12,20 @@
 #   ./e2e-test.sh                         # run everything
 #   ./e2e-test.sh install                 # only the install baseline (phases 0-6)
 #   ./e2e-test.sh labs                     # only the labs (assumes baseline is up)
+#   ./e2e-test.sh all --include-agentcore  # everything + the AWS AgentCore module
+#   ./e2e-test.sh labs --include-agentcore # labs + the AgentCore module
+#   ./e2e-test.sh agentcore                # only the AgentCore module (baseline assumed up)
+#   ./e2e-test.sh agentcore-cleanup        # tear down everything the AgentCore module created
+#
+# SECRETS FILE
+#   An optional ./secrets file (shell syntax, gitignored via the *secret*
+#   pattern) is sourced at startup if present; values it sets win over the
+#   shell environment. Template:
+#     export SOLO_TRIAL_LICENSE_KEY=...   # required by the suite
+#     export FRED_API_KEY=...             # optional -> enables the FRED lab
+#     export AWS_REGION=us-east-1         # optional; agentcore module default
+#     export AR_USER_PREFIX=alexly        # optional; agentcore default $(whoami)
+#   Operator AWS credentials never go here — keep them ambient (aws configure/SSO).
 #
 # LOGIN
 #   ARCTL_LOGIN=device  (default)  real `arctl user login` device-code flow.
@@ -37,8 +51,13 @@ GW_API_VERSION="${GW_API_VERSION:-v1.5.0}"
 KC_REALM="agentregistry-enterprise"
 ARCTL_LOGIN="${ARCTL_LOGIN:-device}"
 LOGIN_OUT="/tmp/are-arctl-login.out"
+AGENTCORE_RAN=0
 WORKDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$WORKDIR"
+
+# optional ./secrets file (gitignored via *secret*) — template in the header
+# shellcheck disable=SC1091
+[ -f "$WORKDIR/secrets" ] && source "$WORKDIR/secrets"
 
 # ---------- pretty output + counters ----------------------------------------
 C_RST=$'\033[0m'; C_GRN=$'\033[32m'; C_RED=$'\033[31m'; C_YEL=$'\033[33m'
@@ -866,6 +885,12 @@ summary() {
   fi
   [ -n "${ARCTL_API_BASE_URL:-}" ] && printf "  ${C_BLD}Agentregistry UI:${C_RST} %s\n" "$ARCTL_API_BASE_URL"
   [ -n "${KC_IP:-}" ] && printf "  ${C_BLD}Keycloak:${C_RST} http://%s:8080  (admin/admin)\n" "$KC_IP"
+  if [ "${AGENTCORE_RAN:-0}" = 1 ]; then
+    printf "\n${C_YEL}${C_BLD}━━━ ⚠ AWS RESOURCES LEFT RUNNING — THESE BILL YOUR ACCOUNT ⚠ ━━━${C_RST}\n"
+    printf "${C_YEL}  AgentCore runtime (econresearch), CloudWatch logs, ECR/S3 image artifacts,\n"
+    printf "  IAM user + 3 policies, CloudFormation role stack — all prefixed \"%s-\".\n" "${AR_USER_PREFIX:-$(whoami)}"
+    printf "  Tear down with:  ./e2e-test.sh agentcore-cleanup${C_RST}\n"
+  fi
   printf "\n"
   [ "$FAIL" -eq 0 ]
 }
@@ -883,7 +908,8 @@ run_install() {
   verify_baseline
 }
 
-run_labs() {
+# re-hydrate env for phases that assume the baseline is already up
+hydrate_env() {
   export PATH="$HOME/.arctl/bin:$PATH"
   # shellcheck disable=SC1090
   source "${HOME}/.are-keycloak-env" 2>/dev/null || true
@@ -891,6 +917,11 @@ run_labs() {
   [ -z "${AR_IP:-}" ] && export AR_IP="$(_lb_ip agentregistry-enterprise-server agentregistry-system)"
   [ -z "${ARCTL_API_BASE_URL:-}" ] && export ARCTL_API_BASE_URL="http://${AR_IP}:12121"
   [ "$ARCTL_LOGIN" = token ] && export ARCTL_API_TOKEN="${ARCTL_API_TOKEN:-$(_token_for admin)}"
+  return 0
+}
+
+run_labs() {
+  hydrate_env
 
   lab_parent_gateway
   lab_remote_mcp "Solo Docs MCP through Agentgateway" \
@@ -914,14 +945,40 @@ run_labs() {
   lab_approval
 }
 
+run_agentcore() {
+  # shellcheck disable=SC1091
+  source "$WORKDIR/e2e-agentcore.sh"
+  if agentcore_preflight; then
+    agentcore_integration && agentcore_deploy
+  else
+    info "AgentCore preflight failed — skipping integration/deploy (see FAILs above)"
+  fi
+  return 0
+}
+
+run_agentcore_cleanup() {
+  # shellcheck disable=SC1091
+  source "$WORKDIR/e2e-agentcore.sh"
+  agentcore_cleanup
+  return 0
+}
+
 main() {
   printf "${C_BLD}Enterprise Agentregistry Workshop — E2E Test${C_RST}\n"
   printf "login=%s  fred=%s\n" "$ARCTL_LOGIN" "$([ -n "${FRED_API_KEY:-}" ] && echo on || echo off)"
+  local INCLUDE_AGENTCORE=0 a
+  local pos=()
+  for a in "$@"; do
+    if [ "$a" = "--include-agentcore" ]; then INCLUDE_AGENTCORE=1; else pos+=("$a"); fi
+  done
+  set -- ${pos[@]+"${pos[@]}"}
   case "${1:-all}" in
     install) run_install ;;
-    labs)    run_labs ;;
-    all)     run_install && run_labs ;;
-    *) echo "usage: $0 [all|install|labs]"; exit 2 ;;
+    labs)    run_labs; [ "$INCLUDE_AGENTCORE" = 1 ] && run_agentcore ;;
+    all)     run_install && { run_labs; [ "$INCLUDE_AGENTCORE" = 1 ] && run_agentcore; } ;;
+    agentcore)         hydrate_env; run_agentcore ;;
+    agentcore-cleanup) hydrate_env; run_agentcore_cleanup ;;
+    *) echo "usage: $0 [all|install|labs|agentcore|agentcore-cleanup] [--include-agentcore]"; exit 2 ;;
   esac
   summary
 }

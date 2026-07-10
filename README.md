@@ -143,8 +143,31 @@ fe-enterprise-agentregistry-workshop/
 │       ├── in-cluster/                  # self-hosted arXiv + FRED MCP: Deployment/Service + catalog/deploy
 │       └── agentgateway/                # parent Gateway/Route + Solo Docs & DeepWiki catalog/deploy
 ├── mcp-client/                          # local Streamlit MCP client (./run.sh) for the gateway MCPs
-└── e2e-test.sh                          # end-to-end test: install baseline + every lab, with pass/fail
+├── e2e-test.sh                          # end-to-end test: install baseline + every lab, with pass/fail
+└── e2e-agentcore.sh                     # opt-in AgentCore module: ./e2e-test.sh agentcore (real AWS, real cost)
 ```
+
+### E2E test
+
+`./e2e-test.sh` runs the install baseline plus every lab (`install`/`labs` subcommands scope it).
+The AWS Bedrock AgentCore labs are opt-in — they create real, billable AWS resources:
+
+```bash
+./e2e-test.sh agentcore              # AgentCore module only (baseline assumed up)
+./e2e-test.sh all --include-agentcore
+./e2e-test.sh agentcore-cleanup      # tear down everything the module created
+```
+
+Secrets can live in a gitignored `./secrets` file sourced at startup:
+
+```bash
+export SOLO_TRIAL_LICENSE_KEY=...   # required by the suite
+export FRED_API_KEY=...             # optional -> enables the FRED lab
+export AWS_REGION=us-east-1         # optional; agentcore module default
+export AR_USER_PREFIX=alexly        # optional; agentcore default $(whoami)
+```
+
+Operator AWS credentials never go in `./secrets` — keep them ambient (`aws configure` / SSO).
 
 ## Validated On
 
