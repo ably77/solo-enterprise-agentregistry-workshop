@@ -890,7 +890,7 @@ summary() {
   [ -n "${KC_IP:-}" ] && printf "  ${C_BLD}Keycloak:${C_RST} http://%s:8080  (admin/admin)\n" "$KC_IP"
   if [ "${AGENTCORE_RAN:-0}" = 1 ]; then
     printf "\n${C_YEL}${C_BLD}━━━ ⚠ AWS RESOURCES LEFT RUNNING — THESE BILL YOUR ACCOUNT ⚠ ━━━${C_RST}\n"
-    printf "${C_YEL}  AgentCore runtime (econresearch), CloudWatch logs, ECR/S3 image artifacts,\n"
+    printf "${C_YEL}  AgentCore runtimes (econresearch, ithelpdesk), CloudWatch logs, ECR/S3 image artifacts,\n"
     printf "  IAM user + 3 policies, CloudFormation role stack — all prefixed \"%s-\".\n" "${AR_USER_PREFIX:-$(whoami)}"
     printf "  Tear down with:  ./e2e-test.sh agentcore-cleanup${C_RST}\n"
   fi
@@ -952,7 +952,7 @@ run_agentcore() {
   # shellcheck disable=SC1091
   source "$WORKDIR/e2e/agentcore.sh"
   if agentcore_preflight; then
-    agentcore_integration && agentcore_deploy
+    agentcore_integration && agentcore_deploy && agentcore_approval
   else
     info "AgentCore preflight failed — skipping integration/deploy (see FAILs above)"
   fi

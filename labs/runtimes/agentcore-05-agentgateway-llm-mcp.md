@@ -1,10 +1,11 @@
-# LLM and MCP Through Agentgateway
+# Route LLM and Registry-Managed MCP Through Agentgateway
 
-> **AWS Bedrock AgentCore series, Part 4 of 4**
+> **AWS Bedrock AgentCore series, Part 5 of 5**
 > [Part 1: Integrate Agentregistry and AgentCore](agentcore-01-integration.md) ·
 > [Part 2: Create Agents](agentcore-02-create-agents.md) ·
 > [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md) ·
-> **Part 4: LLM and MCP Through Agentgateway** (this lab) ·
+> [Part 4: Approval-Gated Agent Onboarding](agentcore-04-approval-onboarding.md) ·
+> **Part 5: Route LLM and Registry-Managed MCP Through Agentgateway** (this lab) ·
 > [Cleanup](agentcore-cleanup.md)
 
 In Parts 1–3, `econresearch`'s model calls went straight from AgentCore to Bedrock (SDK + IAM),
@@ -389,7 +390,7 @@ agent from the gateway alone — without instrumenting the agent itself.
 ## Cleanup
 
 See the
-["If you completed Part 4"](agentcore-cleanup.md#if-you-completed-part-4-llm-and-mcp-through-agentgateway)
+["If you completed Part 5"](agentcore-cleanup.md#if-you-completed-part-5-llm-and-mcp-through-agentgateway)
 section of the consolidated [Cleanup](agentcore-cleanup.md) guide to remove the agent, the OpenAI
 route, and the FRED resources this lab created. Do that before tearing down Part 1's integration
 — a Deployment can't outlive the Runtime it targets.

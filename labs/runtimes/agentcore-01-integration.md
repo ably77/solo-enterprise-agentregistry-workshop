@@ -1,10 +1,11 @@
 # Integrate Agentregistry and AgentCore
 
-> **AWS Bedrock AgentCore series, Part 1 of 4**
+> **AWS Bedrock AgentCore series, Part 1 of 5**
 > **Part 1: Integrate Agentregistry and AgentCore** (this lab) ·
 > [Part 2: Create Agents](agentcore-02-create-agents.md) ·
 > [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md) ·
-> [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md) ·
+> [Part 4: Approval-Gated Agent Onboarding](agentcore-04-approval-onboarding.md) ·
+> [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md) ·
 > [Cleanup](agentcore-cleanup.md)
 
 Wire agentregistry to **AWS Bedrock AgentCore**: build the AWS side from zero, grant the registry
@@ -547,7 +548,7 @@ If you're continuing to [Part 2](agentcore-02-create-agents.md) or
 those labs run on. When you're done with the whole series, tear it down with the
 ["If you completed Part 1"](agentcore-cleanup.md#if-you-completed-part-1-integrate-agentregistry-and-agentcore)
 section of the consolidated [Cleanup](agentcore-cleanup.md) guide — run it **last**, after any
-Part 3/4 deployments are gone, since a Deployment can't outlive the Runtime it targets.
+Parts 3–5 deployments are gone, since a Deployment can't outlive the Runtime it targets.
 
 ## Next
 
@@ -556,5 +557,8 @@ Part 3/4 deployments are gone, since a Deployment can't outlive the Runtime it t
   AWS required).
 - [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md) publishes
   `econresearch` to the catalog and deploys it to the runtime you just registered.
-- [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md) extends
+- [Part 4: Approval-Gated Agent Onboarding](agentcore-04-approval-onboarding.md) onboards the
+  fourth agent through `requireCreateApproval`: submitted by a non-admin, staged, deploy
+  blocked until an admin approves.
+- [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md) extends
   `econresearch` so its LLM and MCP traffic both route through Agentgateway.

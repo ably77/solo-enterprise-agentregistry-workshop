@@ -69,13 +69,14 @@ you'll have:
 
 ## Agent Runtimes
 
-A four-part **AWS Bedrock AgentCore** series (requires an AWS account you can administer):
+A five-part **AWS Bedrock AgentCore** series (requires an AWS account you can administer):
 
 - [Part 1 — Integrate Agentregistry and AgentCore](labs/runtimes/agentcore-01-integration.md) — build the AWS side from zero (CLI, operator auth, Bedrock model availability), grant the registry AWS access, generate the cross-account IAM role via `arctl runtime setup` + CloudFormation, and register the `agentcore` Runtime
 - [Part 2 — Create Agents](labs/runtimes/agentcore-02-create-agents.md) — how the four vertical-use-case agents were built: the `arctl init agent` ADK/Bedrock scaffold, one customized `agent.py` (snapshot data + function tools + grounding instruction), and the Git-sourced catalog entry — all four already checked in under `assets/agents/` (no AWS needed)
-- [Part 3 — Register and Deploy Agents to AgentCore](labs/runtimes/agentcore-03-deploy-agents.md) — publish `econresearch` (a Bedrock Claude-backed economic research agent) to the catalog, deploy it to AgentCore, chat from the UI and tail CloudWatch — then deploy [`claimsupport`](assets/agents/claimsupport/), [`bankingsupport`](assets/agents/bankingsupport/), and [`ithelpdesk`](assets/agents/ithelpdesk/) the same way
-- [Part 4 — LLM and MCP Through Agentgateway](labs/runtimes/agentcore-04-agentgateway-llm-mcp.md) — extend `econresearch` into [`econresearch-agw`](assets/agents/econresearch-agw/): OpenAI (`gpt-5.4-nano`) LLM calls through an Agentgateway `/openai` route (key held in a k8s Secret at the gateway) and live FRED data via the FRED MCP server at `/registry/fred`, both planes on one gateway (requires a publicly reachable gateway LB)
-- [Cleanup](labs/runtimes/agentcore-cleanup.md) — consolidated teardown for all four parts, in dependency order (deployments/catalog entries first, the AWS/IAM integration last)
+- [Part 3 — Register and Deploy Agents to AgentCore](labs/runtimes/agentcore-03-deploy-agents.md) — publish `econresearch` (a Bedrock Claude-backed economic research agent) to the catalog, deploy it to AgentCore, chat from the UI and tail CloudWatch — then deploy [`claimsupport`](assets/agents/claimsupport/) and [`bankingsupport`](assets/agents/bankingsupport/) the same way
+- [Part 4 — Approval-Gated Agent Onboarding](labs/runtimes/agentcore-04-approval-onboarding.md) — onboard the fourth agent, [`ithelpdesk`](assets/agents/ithelpdesk/), the governed way: `requireCreateApproval` on, submitted by the non-admin `reader`, staged in the Administrative Requests queue — deploys are blocked until an admin approves — then deployed to AgentCore
+- [Part 5 — Route LLM and Registry-Managed MCP Through Agentgateway](labs/runtimes/agentcore-05-agentgateway-llm-mcp.md) — extend `econresearch` into [`econresearch-agw`](assets/agents/econresearch-agw/): OpenAI (`gpt-5.4-nano`) LLM calls through an Agentgateway `/openai` route (key held in a k8s Secret at the gateway) and live FRED data via the FRED MCP server at `/registry/fred`, both planes on one gateway (requires a publicly reachable gateway LB)
+- [Cleanup](labs/runtimes/agentcore-cleanup.md) — consolidated teardown for all five parts, in dependency order (deployments/catalog entries first, the AWS/IAM integration last)
 
 ## Access Control
 
@@ -94,7 +95,7 @@ A four-part **AWS Bedrock AgentCore** series (requires an AWS account you can ad
 - Publish versioned `Skill` catalog assets (`arctl init`/`apply`), ship a second tag, and `arctl pull` them as a consumer
 - Register AWS Bedrock AgentCore as a cloud `Runtime` and deploy catalog `Agent`s to it — registry-built image from Git source, verified in the UI and CloudWatch; four example agents ship in the catalog (`econresearch`, `claimsupport`, `bankingsupport`, `ithelpdesk`) covering FSI research, insurance, banking, and IT helpdesk use cases
 - Enforce catalog RBAC with `AccessPolicy` against Keycloak group names
-- Gate catalog submissions behind admin approval and approve/reject via the `/v0/approve` API
+- Gate catalog submissions behind admin approval and approve/reject via the `/v0/approve` API — including an AgentCore agent's onboarding, where the staged agent is blocked from deploying until approved
 
 ## Repo Layout
 
@@ -124,8 +125,9 @@ fe-enterprise-agentregistry-workshop/
 │   │   ├── agentcore-01-integration.md   # wire the registry to AWS + register the Runtime
 │   │   ├── agentcore-02-create-agents.md # how the ADK/Bedrock example agents were built
 │   │   ├── agentcore-03-deploy-agents.md # publish + deploy to AgentCore, chat, CloudWatch
-│   │   ├── agentcore-04-agentgateway-llm-mcp.md # LLM + FRED MCP through Agentgateway
-│   │   └── agentcore-cleanup.md          # consolidated teardown for all four parts
+│   │   ├── agentcore-04-approval-onboarding.md  # onboard ithelpdesk through the approval queue
+│   │   ├── agentcore-05-agentgateway-llm-mcp.md # LLM + FRED MCP through Agentgateway
+│   │   └── agentcore-cleanup.md          # consolidated teardown for all five parts
 │   └── access-control/
 │       ├── access-policies.md
 │       └── approval-workflows.md

@@ -2,9 +2,10 @@
 # =============================================================================
 # Enterprise Agentregistry Workshop — AgentCore E2E Module
 # =============================================================================
-# Covers the labs/runtimes/ AWS Bedrock AgentCore series, Parts 1 + 3:
+# Covers the labs/runtimes/ AWS Bedrock AgentCore series, Parts 1, 3 + 4:
 # IAM/CloudFormation integration, Runtime registration, publish + deploy
-# econresearch, live round-trip. Opt-in only (real AWS resources, real cost).
+# econresearch, live round-trip, and approval-gated onboarding of ithelpdesk.
+# Opt-in only (real AWS resources, real cost).
 #
 # Sourced by e2e-test.sh (./e2e-test.sh agentcore | agentcore-cleanup |
 # --include-agentcore); reuses its helpers. Never run directly.
@@ -274,6 +275,7 @@ _agentcore_dep_deployed() {
   _arctl get deployment "$1" -o json 2>/dev/null \
     | jq -e '[.status.conditions[]? | select(.type == "Ready" and .status == "True")] | length > 0' >/dev/null 2>&1
 }
+_agentcore_dep_gone() { ! _arctl get deployment "$1" >/dev/null 2>&1; }
 
 agentcore_deploy() {
   phase "AgentCore Phase 2 — Deploy econresearch"
@@ -346,12 +348,173 @@ EOF
 }
 
 # =============================================================================
+# AgentCore Phase 3 — Approval-Gated Onboarding (ithelpdesk)
+# Mirrors labs/runtimes/agentcore-04-approval-onboarding.md: flag on, submit as
+# the non-admin reader -> staged, deploy blocked, approve via /v0/approve,
+# deploy for real, flag off. Rerun-safe: a previously committed ithelpdesk is
+# removed first so the staged path is demonstrable again. agentcore_approval()
+# wraps the flow so "Restore defaults" runs on EVERY exit path — a mid-phase
+# failure never leaves the flag or the AccessPolicy behind.
+# =============================================================================
+_ithelpdesk_pending() {
+  curl -s -H "Authorization: Bearer $(_token_for reader)" "${ARCTL_API_BASE_URL}/v0/approve" \
+    | jq -e '.items[]? | select(.name=="ithelpdesk")' >/dev/null 2>&1
+}
+_ithelpdesk_in_catalog() { _arctl get agent ithelpdesk --tag 1.0.0 >/dev/null 2>&1; }
+
+_agentcore_approval_flow() {
+  step "Rerun-safety: clear any committed ithelpdesk"
+  if _ithelpdesk_in_catalog; then
+    _arctl delete deployment ithelpdesk >/dev/null 2>&1 || true
+    poll 300 10 _agentcore_dep_gone ithelpdesk || info "deployment still listed after 5m — continuing"
+    _arctl delete agent ithelpdesk --tag 1.0.0 >/dev/null 2>&1 || true
+    info "removed prior ithelpdesk deployment/agent"
+  fi
+  if _ithelpdesk_in_catalog; then
+    fail "ithelpdesk still committed after rerun-safety cleanup — delete it manually (arctl delete deployment/agent ithelpdesk) and re-run"
+    return 1
+  fi
+  pass "catalog has no committed ithelpdesk"
+
+  step "Enable config.requireCreateApproval=true"
+  helm upgrade --install agentregistry-enterprise \
+    oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
+    --version "$ARE_HELM_VERSION" --namespace agentregistry-system \
+    --reuse-values --set config.requireCreateApproval=true >/dev/null 2>&1
+  kubectl rollout status -n agentregistry-system deploy/agentregistry-enterprise-server --timeout=180s >/dev/null 2>&1
+  local flag; flag=$(kubectl -n agentregistry-system get configmap agentregistry-enterprise \
+    -o jsonpath='{.data.REQUIRE_CREATE_APPROVAL}' 2>/dev/null)
+  assert_contains "REQUIRE_CREATE_APPROVAL=true" "true" "$flag" || return 1
+
+  step "Grant are-readers agent publish/edit"
+  _arctl apply -f - >/dev/null 2>&1 <<EOF
+apiVersion: ar.dev/v1alpha1
+kind: AccessPolicy
+metadata:
+  name: are-readers-agent-onboarding
+spec:
+  principals:
+    - kind: Role
+      name: "are-readers"
+  rules:
+    - actions: ["registry:read","registry:publish","registry:edit"]
+      resources:
+        - kind: agent
+          name: "*"
+EOF
+  pass "AccessPolicy are-readers-agent-onboarding applied"
+
+  step "Submit ithelpdesk as reader -> staged"
+  local sub
+  sub=$(ARCTL_API_TOKEN="$(_token_for reader)" arctl apply -f assets/agents/ithelpdesk/agent.yaml 2>&1)
+  assert_contains "submission staged (not committed)" "staged" "$sub" || return 1
+  if _ithelpdesk_in_catalog; then
+    fail "staged ithelpdesk unexpectedly visible in catalog"
+    return 1
+  fi
+  pass "staged ithelpdesk not in catalog"
+
+  step "Deployment blocked while staged"
+  cat > /tmp/agentcore-ithelpdesk-deployment.yaml <<EOF
+apiVersion: ar.dev/v1alpha1
+kind: Deployment
+metadata:
+  name: ithelpdesk
+spec:
+  targetRef:
+    kind: Agent
+    name: ithelpdesk
+    tag: "1.0.0"
+  runtimeRef:
+    kind: Runtime
+    name: agentcore
+  runtimeConfig:
+    region: ${AWS_REGION}
+    workdir: assets/agents/ithelpdesk
+EOF
+  local dep_applied=0
+  if _arctl apply -f /tmp/agentcore-ithelpdesk-deployment.yaml >/dev/null 2>&1; then
+    dep_applied=1
+    # server accepted the object — it must not reach deployed while staged
+    if poll 60 10 _agentcore_dep_deployed ithelpdesk; then
+      fail "Deployment of a STAGED agent reached deployed — approval gate not effective"
+      return 1
+    fi
+    if _arctl get deployment ithelpdesk -o json 2>/dev/null \
+         | jq -e '.status.conditions[]? | select(.type=="Ready" and .reason=="ReferencePending")' >/dev/null 2>&1; then
+      info "condition reason=ReferencePending confirmed"
+    else
+      info "condition reason=ReferencePending not observed (soft check)"
+    fi
+    # observed: applying while staged is accepted and held (Ready=False,
+    # reason ReferencePending); leave it in place — it self-heals after
+    # approval with no re-apply, so do NOT delete it here
+    pass "Deployment accepted but held (ReferencePending) while staged"
+  else
+    pass "Deployment of staged agent rejected at apply time"
+  fi
+
+  step "Approve via /v0/approve (admin)"
+  if ! poll 30 3 _ithelpdesk_pending; then
+    fail "no pending approval request for ithelpdesk"
+    return 1
+  fi
+  local res; res=$(curl -s -X POST -H "Authorization: Bearer $(_token_for admin)" -H "Content-Type: application/json" \
+    -d '{"action":"approve","items":[{"kind":"Agent","namespace":"default","name":"ithelpdesk","tag":"1.0.0"}]}' \
+    "${ARCTL_API_BASE_URL}/v0/approve")
+  assert_contains "approve returned status=approved" "approved" "$res" || return 1
+  if poll 30 3 _ithelpdesk_in_catalog; then
+    pass "ithelpdesk committed to catalog"
+  else
+    fail "approved ithelpdesk not found in catalog"
+    return 1
+  fi
+
+  step "Approved Deployment reconciles on its own (up to 15m)"
+  if [ "$dep_applied" = 0 ]; then
+    assert "arctl apply Deployment" _arctl apply -f /tmp/agentcore-ithelpdesk-deployment.yaml || return 1
+  fi
+  if poll 900 15 _agentcore_dep_deployed ithelpdesk; then
+    pass "deployment ithelpdesk reached deployed"
+  else
+    fail "deployment ithelpdesk not deployed within 15m"
+    info "status.conditions:"
+    _arctl get deployment ithelpdesk -o yaml 2>/dev/null | sed -n '/conditions:/,$p' | sed 's/^/    /'
+    return 1
+  fi
+}
+
+agentcore_approval() {
+  phase "AgentCore Phase 3 — Approval-Gated Onboarding (ithelpdesk)"
+  AGENTCORE_RAN=1
+
+  local rc=0
+  _agentcore_approval_flow || rc=$?
+
+  # runs on EVERY exit path of the flow so a mid-phase failure never leaves
+  # the approval flag or the AccessPolicy behind for later phases/labs
+  step "Restore defaults (flag off, policy removed; always runs)"
+  _arctl delete accesspolicy are-readers-agent-onboarding >/dev/null 2>&1 || true
+  local flag
+  flag=$(kubectl -n agentregistry-system get configmap agentregistry-enterprise \
+    -o jsonpath='{.data.REQUIRE_CREATE_APPROVAL}' 2>/dev/null)
+  if [ "$flag" = "true" ]; then
+    helm upgrade --install agentregistry-enterprise \
+      oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
+      --version "$ARE_HELM_VERSION" --namespace agentregistry-system \
+      --reuse-values --set config.requireCreateApproval=false >/dev/null 2>&1
+    kubectl rollout status -n agentregistry-system deploy/agentregistry-enterprise-server --timeout=180s >/dev/null 2>&1
+  fi
+  pass "approval flag reset to false; policy removed"
+
+  return "$rc"
+}
+
+# =============================================================================
 # AgentCore Cleanup — ./e2e-test.sh agentcore-cleanup (never automatic)
 # Order matters: registry Deployment before Runtime before the AWS stack/IAM.
 # Every step tolerates already-gone resources, so re-running is safe.
 # =============================================================================
-_agentcore_dep_gone() { ! _arctl get deployment "$1" >/dev/null 2>&1; }
-
 agentcore_cleanup() {
   phase "AgentCore Cleanup"
 
@@ -384,9 +547,21 @@ agentcore_cleanup() {
   fi
   _arctl delete agent econresearch --tag 1.0.0 >/dev/null 2>&1 \
     && info "deleted agent econresearch" || info "agent econresearch already gone"
+  local it_rt_id
+  it_rt_id=$(_arctl get deployment ithelpdesk -o yaml 2>/dev/null \
+    | grep -oE 'arn:aws:bedrock-agentcore:[a-z0-9-]+:[0-9]+:runtime/[A-Za-z0-9_-]+' | head -1 | sed 's#.*/##')
+  if _arctl delete deployment ithelpdesk >/dev/null 2>&1; then
+    info "deleted deployment ithelpdesk"
+    poll 300 10 _agentcore_dep_gone ithelpdesk || info "deployment still listed after 5m — continuing"
+  else
+    info "deployment ithelpdesk already gone"
+  fi
+  _arctl delete agent ithelpdesk --tag 1.0.0 >/dev/null 2>&1 \
+    && info "deleted agent ithelpdesk" || info "agent ithelpdesk already gone"
   _arctl delete runtime agentcore >/dev/null 2>&1 \
     && info "deleted runtime agentcore" || info "runtime agentcore already gone"
-  if _agentcore_dep_gone econresearch && ! _arctl get runtimes 2>/dev/null | grep -qw agentcore; then
+  if _agentcore_dep_gone econresearch && _agentcore_dep_gone ithelpdesk \
+     && ! _arctl get runtimes 2>/dev/null | grep -qw agentcore; then
     pass "registry objects removed"
   else
     fail "registry objects still present after delete — aborting before AWS teardown (fix arctl session/server and re-run)"
@@ -431,6 +606,13 @@ agentcore_cleanup() {
   else
     skip "log-group sweep (no runtime id in deployment status; remove /aws/bedrock-agentcore/runtimes/<id>-DEFAULT manually if present)"
   fi
+  if [ -n "${it_rt_id:-}" ]; then
+    aws logs delete-log-group \
+      --log-group-name "/aws/bedrock-agentcore/runtimes/${it_rt_id}-DEFAULT" \
+      --region "$AWS_REGION" >/dev/null 2>&1 \
+      && info "deleted /aws/bedrock-agentcore/runtimes/${it_rt_id}-DEFAULT" \
+      || info "log group for ${it_rt_id} already gone"
+  fi
 
   step "Drop aws.* helm values"
   if _helm_aws_enabled; then
@@ -452,8 +634,9 @@ agentcore_cleanup() {
 
   step "Local temp files"
   rm -f /tmp/agentregistry-cf.yaml /tmp/agentcore-runtime.yaml \
-        /tmp/agentcore-econresearch-deployment.yaml /tmp/agentcore-invoke-out.json
+        /tmp/agentcore-econresearch-deployment.yaml /tmp/agentcore-ithelpdesk-deployment.yaml \
+        /tmp/agentcore-invoke-out.json
   pass "temp files removed"
 
-  info "Removed: registry deployment/agent/runtime, stack ${AR_STACK_NAME}, user ${AR_DEPLOYER_USER} + 3 policies, runtime log group (targeted), aws.* helm values"
+  info "Removed: registry deployments/agents (econresearch, ithelpdesk)/runtime, stack ${AR_STACK_NAME}, user ${AR_DEPLOYER_USER} + 3 policies, runtime log group (targeted), aws.* helm values"
 }
