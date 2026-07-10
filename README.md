@@ -144,7 +144,7 @@ fe-enterprise-agentregistry-workshop/
 │       └── agentgateway/                # parent Gateway/Route + Solo Docs & DeepWiki catalog/deploy
 ├── mcp-client/                          # local Streamlit MCP client (./run.sh) for the gateway MCPs
 ├── e2e-test.sh                          # end-to-end test: install baseline + every lab, with pass/fail
-└── e2e-agentcore.sh                     # opt-in AgentCore module: ./e2e-test.sh agentcore (real AWS, real cost)
+└── e2e/agentcore.sh                     # opt-in AgentCore module: ./e2e-test.sh agentcore (real AWS, real cost)
 ```
 
 ### E2E test
@@ -156,6 +156,7 @@ The AWS Bedrock AgentCore labs are opt-in — they create real, billable AWS res
 ./e2e-test.sh agentcore              # AgentCore module only (baseline assumed up)
 ./e2e-test.sh all --include-agentcore
 ./e2e-test.sh agentcore-cleanup      # tear down everything the module created
+./e2e-test.sh cleanup                # tear down the in-cluster footprint (keeps CRDs + arctl)
 ```
 
 Secrets can live in a gitignored `./secrets` file sourced at startup:
