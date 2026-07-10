@@ -297,6 +297,12 @@ EOF
 arctl get deployments
 ```
 
+`econresearch-agw` deploys alongside the Part 3 agents, distinguished by its `AgentCore` platform
+badge and `aws` runtime just like the others — the difference is invisible at this level; it
+shows up in *how* the agent reaches its model and tools, not in the deploy mechanics:
+
+![Instances view showing econresearch-agw deployed alongside the Part 3 agents](../../assets/screenshots/25-are-ui-agentcore-agw-instances.png)
+
 The Deployment moves `deploying` → `deployed` (clone, dependency install from the agent's
 `requirements.txt`, AgentCore rollout — a few minutes, same phases as
 [Part 3](agentcore-03-deploy-agents.md)).
@@ -320,6 +326,8 @@ Check the answer against Part 3's `econresearch`:
 - It cites **recent observation dates** (this month/quarter — live FRED data), not the fixed
   snapshot dates, and no "demo snapshot" disclaimer appears.
 - The tool calls are `fred_search` / `fred_get_series`, not `get_series_latest`.
+
+![econresearch-agw chat: live CPI, 30-year mortgage, and 10-year treasury readings with current observation dates and no demo-snapshot disclaimer](../../assets/screenshots/24-agentcore-econresearch-agw-chat.png)
 
 Both planes are now observable in one place. CloudWatch still has the agent's own logs
 (Part 3's flow):
@@ -349,7 +357,7 @@ kubectl -n agentgateway-system logs deploy/agentregistry-gateway --tail=50
 | Deploy fails with `ErrMCPSetMismatch` mentioning an MCP that *is* declared | You added `deploymentRefs` — the registry excludes remote MCPServers from the set `deploymentRefs` may wire, so the ref counts as extra (see the note in 4.1). Drop `deploymentRefs`; the remote `fred-gateway-mcp` entry needs none. |
 | Agent has no FRED tools (answers from memory or refuses) | MCP wiring: `spec.mcpServers` names `fred-gateway-mcp` in the published agent (`arctl get agent econresearch-agw -o yaml`), and that catalog entry's `remote.url` is your gateway's public `/registry/fred` (4.1). |
 | Agent crashes at startup with `cannot determine the agentgateway LLM base URL` | `MCP_SERVERS_CONFIG` wasn't injected — same MCP-wiring checks as above; the LLM base URL is derived from it. |
-| First chat fails with `Fail to load 'econresearch_agw' module. LiteLLM support requires...` | The image was built without `litellm` — confirm `requirements.txt` is present in the deployed subfolder/branch (see the note in 4.2) and redeploy. |
+| First chat fails with `Fail to load 'econresearch_agw' module. LiteLLM support requires...` | The image was built without `litellm`. The deploy log's "Final requirements.txt" (visible in the Instances view's Logs panel) shows exactly what the builder installed — if it's only the auto-generated `kagent-adk`/`google-adk`/etc. defaults with no `litellm` line, the builder never saw your checked-in `requirements.txt` at all. This isn't necessarily a local file problem: `agent.yaml`'s `source.repository` clones a specific **branch on GitHub**, not your working tree, so if `requirements.txt` was added in a commit that hasn't been pushed to that branch yet, the clone predates the file. Confirm with `git log <branch> -- <subfolder>/requirements.txt` against the remote, push/merge if needed, then `arctl delete deployment <name>` + re-`apply` to force a fresh clone and build (re-`apply`-ing the same Deployment spec unchanged does not retrigger a rebuild). |
 | FRED `tools/list` works but `tools/call` fails | FRED credential problem, not connectivity: check the `fred-api-key` Secret (see the [FRED MCP lab](../mcp/fred-mcp.md)). |
 
 ## Cleanup
