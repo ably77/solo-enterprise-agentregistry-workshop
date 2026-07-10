@@ -16,6 +16,9 @@
 #   ./e2e-test.sh labs --include-agentcore # labs + the AgentCore module
 #   ./e2e-test.sh agentcore                # only the AgentCore module (baseline assumed up)
 #   ./e2e-test.sh agentcore-cleanup        # tear down everything the AgentCore module created
+#   ./e2e-test.sh cleanup                  # tear down the in-cluster footprint: helm releases +
+#                                          # namespaces (incl. PVC data) + ~/.are-keycloak-env.
+#                                          # Keeps CRDs and arctl. --yes skips the confirm prompt.
 #
 # SECRETS FILE
 #   An optional ./secrets file (shell syntax, gitignored via the *secret*
@@ -947,7 +950,7 @@ run_labs() {
 
 run_agentcore() {
   # shellcheck disable=SC1091
-  source "$WORKDIR/e2e-agentcore.sh"
+  source "$WORKDIR/e2e/agentcore.sh"
   if agentcore_preflight; then
     agentcore_integration && agentcore_deploy
   else
@@ -958,18 +961,112 @@ run_agentcore() {
 
 run_agentcore_cleanup() {
   # shellcheck disable=SC1091
-  source "$WORKDIR/e2e-agentcore.sh"
+  source "$WORKDIR/e2e/agentcore.sh"
   agentcore_cleanup
+  return 0
+}
+
+# =============================================================================
+# Cleanup — tear down the in-cluster workshop footprint
+# Helm releases first (hooks + LB services go down cleanly), then the
+# namespaces (sweeps parent Gateway/routes, generated child routes/backends,
+# PVCs with Postgres/ClickHouse data, the fred secret). Deliberately left in
+# place: cluster-scoped CRDs (Gateway API + agentgateway — deleting them wipes
+# those kinds cluster-wide on a shared cluster) and the arctl CLI/session.
+# Rerun-safe: on an already-clean cluster every step PASSes or SKIPs.
+# =============================================================================
+CLEANUP_NAMESPACES="agentregistry-system agentgateway-system mcp keycloak"
+_ns_gone() { ! kubectl get namespace "$1" >/dev/null 2>&1; }
+
+run_cleanup() {
+  phase "Cleanup — remove the in-cluster workshop footprint"
+
+  step "Preflight"
+  assert "kubectl can reach the cluster" kubectl get nodes || return 1
+
+  # AgentCore leftover probe runs BEFORE the confirm prompt on purpose:
+  # agentcore-cleanup deletes the Bedrock runtime THROUGH the registry (arctl
+  # delete deployment), so wiping the cluster first orphans the AWS resources.
+  step "AgentCore AWS leftovers (read-only probe)"
+  local aws_leftovers=0
+  if ! require_cmd aws || ! aws sts get-caller-identity >/dev/null 2>&1; then
+    skip "aws CLI absent or no credentials — probe skipped"
+  else
+    local prefix="${AR_USER_PREFIX:-$(whoami)}"
+    if aws iam get-user --user-name "${prefix}-agentregistry-deployer" >/dev/null 2>&1 \
+       || aws cloudformation describe-stacks --stack-name "${prefix}-agentregistry-access-role" \
+            --region "${AWS_REGION:-us-east-1}" >/dev/null 2>&1; then
+      aws_leftovers=1
+      skip "AgentCore AWS resources still exist"
+      info "${C_YEL}⚠ run ./e2e-test.sh agentcore-cleanup FIRST — it deletes the Bedrock runtime"
+      info "through the registry, which this cleanup is about to destroy${C_RST}"
+      AGENTCORE_RAN=1  # reuse the summary banner pointing at agentcore-cleanup
+    else
+      pass "no ${prefix}-prefixed AgentCore AWS resources found"
+    fi
+  fi
+
+  step "Confirm"
+  info "kube-context: $(kubectl config current-context 2>/dev/null)"
+  info "deletes: helm releases agentregistry-enterprise + enterprise-agentgateway,"
+  info "namespaces ${CLEANUP_NAMESPACES} (incl. PVC data), ~/.are-keycloak-env"
+  info "keeps:   Gateway API + agentgateway CRDs, arctl CLI + session"
+  [ "$aws_leftovers" = 1 ] && info "${C_YEL}⚠ AgentCore AWS resources exist — proceeding will orphan them${C_RST}"
+  if [ "${CLEANUP_YES:-0}" = 1 ] || [ ! -t 0 ]; then
+    pass "confirmation skipped ($([ "${CLEANUP_YES:-0}" = 1 ] && echo '--yes' || echo 'non-interactive stdin'))"
+  else
+    printf "  Proceed? [y/N] "
+    local reply; read -r reply
+    case "$reply" in
+      y|Y|yes|YES) pass "confirmed" ;;
+      *) skip "aborted by user — nothing deleted"; return 0 ;;
+    esac
+  fi
+
+  step "Helm releases"
+  local rel ns
+  for rel in agentregistry-enterprise:agentregistry-system enterprise-agentgateway:agentgateway-system; do
+    ns="${rel#*:}"; rel="${rel%%:*}"
+    if helm status "$rel" -n "$ns" >/dev/null 2>&1; then
+      assert "helm uninstall $rel" helm uninstall "$rel" -n "$ns" --wait --timeout 5m
+    else
+      skip "release $rel not found in $ns"
+    fi
+  done
+  info "agentgateway-crds release left alone so the CRDs survive"
+
+  step "Namespaces (incl. PVCs/data)"
+  for ns in $CLEANUP_NAMESPACES; do
+    if _ns_gone "$ns"; then skip "namespace $ns already absent"; continue; fi
+    kubectl delete namespace "$ns" --wait=false >/dev/null 2>&1
+    if poll 300 5 _ns_gone "$ns"; then
+      pass "namespace $ns deleted"
+    else
+      fail "namespace $ns stuck terminating after 5m — check finalizers: kubectl get ns $ns -o yaml"
+    fi
+  done
+
+  step "Local artifacts"
+  if [ -f "$HOME/.are-keycloak-env" ]; then
+    assert "remove ~/.are-keycloak-env" rm -f "$HOME/.are-keycloak-env"
+  else
+    skip "~/.are-keycloak-env already absent"
+  fi
+  info "arctl CLI + session left untouched"
   return 0
 }
 
 main() {
   printf "${C_BLD}Enterprise Agentregistry Workshop — E2E Test${C_RST}\n"
   printf "login=%s  fred=%s\n" "$ARCTL_LOGIN" "$([ -n "${FRED_API_KEY:-}" ] && echo on || echo off)"
-  local INCLUDE_AGENTCORE=0 a
+  local INCLUDE_AGENTCORE=0 CLEANUP_YES=0 a
   local pos=()
   for a in "$@"; do
-    if [ "$a" = "--include-agentcore" ]; then INCLUDE_AGENTCORE=1; else pos+=("$a"); fi
+    case "$a" in
+      --include-agentcore) INCLUDE_AGENTCORE=1 ;;
+      --yes)               CLEANUP_YES=1 ;;
+      *)                   pos+=("$a") ;;
+    esac
   done
   set -- ${pos[@]+"${pos[@]}"}
   case "${1:-all}" in
@@ -978,7 +1075,8 @@ main() {
     all)     run_install && { run_labs; [ "$INCLUDE_AGENTCORE" = 1 ] && run_agentcore; } ;;
     agentcore)         hydrate_env; run_agentcore ;;
     agentcore-cleanup) hydrate_env; run_agentcore_cleanup ;;
-    *) echo "usage: $0 [all|install|labs|agentcore|agentcore-cleanup] [--include-agentcore]"; exit 2 ;;
+    cleanup)           run_cleanup ;;
+    *) echo "usage: $0 [all|install|labs|agentcore|agentcore-cleanup|cleanup] [--include-agentcore] [--yes]"; exit 2 ;;
   esac
   summary
 }

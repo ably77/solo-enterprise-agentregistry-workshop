@@ -1,5 +1,10 @@
 # Changelog
 
+0.1.4 - (7-10-26)
+---
+- Add cleanup to `e2e-test.sh`
+- Move `e2e-agentcore.sh` → `e2e/agentcore.sh` — it's a sourced module, never run directly
+
 0.1.3 - (7-10-26)
 ---
 - Fix to `e2e-agentcore.sh`
