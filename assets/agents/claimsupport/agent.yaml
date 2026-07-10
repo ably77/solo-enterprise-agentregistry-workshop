@@ -1,0 +1,22 @@
+# Catalog entry for the claimsupport agent (AWS Bedrock AgentCore lab).
+#
+# agentregistry clones the agent source from `source.repository.url` at the
+# given `subfolder` and builds the AgentCore image from its Dockerfile.
+# Until this workshop repo is published, the URL points at the public copy
+# so the lab works today. Once `solo-io/fe-enterprise-agentregistry-workshop`
+# is public, repoint to:
+#   url: "https://github.com/solo-io/fe-enterprise-agentregistry-workshop"
+apiVersion: ar.dev/v1alpha1
+kind: Agent
+metadata:
+  name: claimsupport
+  tag: "1.0.0"
+spec:
+  description: "Insurance claim support assistant - claim status and policy coverage lookups (status, adjuster, amounts, coverage limits, deductible) from a curated snapshot"
+  modelName: us.anthropic.claude-sonnet-4-6
+  modelProvider: bedrock
+  source:
+    image: localhost:5001/claimsupport:latest
+    repository:
+      url: "https://github.com/ably77/solo-enterprise-agentregistry-workshop"
+      subfolder: "assets/agents/claimsupport"

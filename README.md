@@ -70,6 +70,7 @@ you'll have:
 ## Agent Runtimes
 
 - [AWS Bedrock AgentCore](labs/runtimes/aws-bedrock-agentcore.md) — register AgentCore as a cloud `Runtime` (cross-account IAM role via `arctl runtime setup` + CloudFormation) and deploy `econresearch`, a Bedrock Claude-backed economic research agent, from the catalog to AWS (~30 min; requires an AWS account with Bedrock model access)
+- [`claimsupport`](assets/agents/claimsupport/), [`bankingsupport`](assets/agents/bankingsupport/), [`ithelpdesk`](assets/agents/ithelpdesk/) — three more example agents on the same ADK/Bedrock scaffold (insurance claim support, personal banking support, internal IT helpdesk), deployable to the same `agentcore` Runtime — see [lab section 7](labs/runtimes/aws-bedrock-agentcore.md#7-deploy-more-example-agents-optional)
 
 ## Access Control
 
@@ -86,7 +87,7 @@ you'll have:
 - Expose remote and in-cluster MCP servers through Enterprise Agentgateway via a `Virtual` runtime — one gateway endpoint, many backends at distinct paths, with gateway-managed TLS to the upstream
 - Manage versioned `Prompt` catalog assets independently of agents
 - Publish versioned `Skill` catalog assets (`arctl init`/`apply`), ship a second tag, and `arctl pull` them as a consumer
-- Register AWS Bedrock AgentCore as a cloud `Runtime` and deploy a catalog `Agent` to it — registry-built image from Git source, verified in the UI and CloudWatch
+- Register AWS Bedrock AgentCore as a cloud `Runtime` and deploy catalog `Agent`s to it — registry-built image from Git source, verified in the UI and CloudWatch; four example agents ship in the catalog (`econresearch`, `claimsupport`, `bankingsupport`, `ithelpdesk`) covering FSI research, insurance, banking, and IT helpdesk use cases
 - Enforce catalog RBAC with `AccessPolicy` against Keycloak group names
 - Gate catalog submissions behind admin approval and approve/reject via the `/v0/approve` API
 

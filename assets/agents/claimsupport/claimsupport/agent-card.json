@@ -1,0 +1,19 @@
+{
+  "name": "claimsupport",
+  "description": "Insurance claim support assistant — answers questions about claim status and policy coverage from a curated snapshot.",
+  "url": "http://localhost:8080",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": true
+  },
+  "defaultInputModes": ["text"],
+  "defaultOutputModes": ["text"],
+  "skills": [
+    {
+      "id": "claim-support",
+      "name": "Claim Support",
+      "description": "Look up insurance claim status (adjuster, dates, claimed/approved amounts) and policy coverage (limits, deductible, premium) from a curated snapshot, with claim/policy IDs cited.",
+      "tags": ["insurance", "claims", "support"]
+    }
+  ]
+}

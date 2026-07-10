@@ -1,0 +1,22 @@
+# Catalog entry for the ithelpdesk agent (AWS Bedrock AgentCore lab).
+#
+# agentregistry clones the agent source from `source.repository.url` at the
+# given `subfolder` and builds the AgentCore image from its Dockerfile.
+# Until this workshop repo is published, the URL points at the public copy
+# so the lab works today. Once `solo-io/fe-enterprise-agentregistry-workshop`
+# is public, repoint to:
+#   url: "https://github.com/solo-io/fe-enterprise-agentregistry-workshop"
+apiVersion: ar.dev/v1alpha1
+kind: Agent
+metadata:
+  name: ithelpdesk
+  tag: "1.0.0"
+spec:
+  description: "Internal IT helpdesk assistant - ticket status and knowledge-base article lookups (status, assignee, priority, KB steps) from a curated snapshot"
+  modelName: us.anthropic.claude-sonnet-4-6
+  modelProvider: bedrock
+  source:
+    image: localhost:5001/ithelpdesk:latest
+    repository:
+      url: "https://github.com/ably77/solo-enterprise-agentregistry-workshop"
+      subfolder: "assets/agents/ithelpdesk"

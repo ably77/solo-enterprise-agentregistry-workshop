@@ -52,3 +52,4 @@ temp/
 
 # Design specs / implementation plans (working docs, not workshop content)
 /docs/
+.worktrees/

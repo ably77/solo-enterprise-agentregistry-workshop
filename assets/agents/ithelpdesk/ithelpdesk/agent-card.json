@@ -1,0 +1,19 @@
+{
+  "name": "ithelpdesk",
+  "description": "Internal IT helpdesk assistant — answers questions about ticket status and knowledge-base articles from a curated snapshot.",
+  "url": "http://localhost:8080",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": true
+  },
+  "defaultInputModes": ["text"],
+  "defaultOutputModes": ["text"],
+  "skills": [
+    {
+      "id": "it-helpdesk",
+      "name": "IT Helpdesk",
+      "description": "Look up internal IT helpdesk ticket status (assignee, priority, dates) and search knowledge-base articles by keyword from a curated snapshot, with ticket/article IDs cited.",
+      "tags": ["it", "helpdesk", "support"]
+    }
+  ]
+}

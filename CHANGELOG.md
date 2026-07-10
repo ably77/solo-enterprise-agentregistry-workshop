@@ -6,6 +6,7 @@
 - Added `assets/agents/econresearch/` — a new vertical-use-case agent (FSI economic research assistant): Google ADK Python on Bedrock Claude (`us.anthropic.claude-sonnet-4-6`) with tools over a curated FRED-style indicator snapshot
 - Added `assets/runtimes/agentcore/` — the two IAM policies the registry server needs for AgentCore (from the docs quickstart)
 - New **Agent Runtimes** section in `README.md` (TOC, use cases, repo layout updated)
+- Added three agent examples in `assets/agents/` — `claimsupport`, `bankingsupport`, and `ithelpdesk`, insurance claim, personal banking, and IT helpdesk support assistants matching econresearch's ADK/Bedrock scaffold, wired into the AgentCore lab and README
 
 0.0.7 - (7-8-26)
 ---

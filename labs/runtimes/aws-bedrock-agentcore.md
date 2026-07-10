@@ -523,6 +523,91 @@ aws logs tail "/aws/bedrock-agentcore/runtimes/<runtime-id>-DEFAULT" \
   --region "${AWS_REGION}" --follow
 ```
 
+## 7. Deploy More Example Agents (optional)
+
+The catalog has three more vertical-use-case example agents built the same way as
+`econresearch` — same ADK/Bedrock scaffold, same `agentcore` Runtime from steps 1-3, no new AWS
+setup required:
+
+| Agent | Use case | Tools |
+|---|---|---|
+| [`claimsupport`](../../assets/agents/claimsupport/) | Insurance claim support | `get_claim_status`, `get_policy_coverage` |
+| [`bankingsupport`](../../assets/agents/bankingsupport/) | Personal banking support | `get_account_summary`, `list_recent_transactions` |
+| [`ithelpdesk`](../../assets/agents/ithelpdesk/) | Internal IT helpdesk | `get_ticket_status`, `search_kb_articles` |
+
+Publish and deploy each one the same way you did `econresearch` in steps 4-5:
+
+```bash
+arctl apply -f assets/agents/claimsupport/agent.yaml
+arctl apply -f - <<EOF
+apiVersion: ar.dev/v1alpha1
+kind: Deployment
+metadata:
+  name: claimsupport
+spec:
+  targetRef:
+    kind: Agent
+    name: claimsupport
+    tag: "1.0.0"
+  runtimeRef:
+    kind: Runtime
+    name: agentcore
+  runtimeConfig:
+    region: ${AWS_REGION}
+    workdir: assets/agents/claimsupport
+EOF
+
+arctl apply -f assets/agents/bankingsupport/agent.yaml
+arctl apply -f - <<EOF
+apiVersion: ar.dev/v1alpha1
+kind: Deployment
+metadata:
+  name: bankingsupport
+spec:
+  targetRef:
+    kind: Agent
+    name: bankingsupport
+    tag: "1.0.0"
+  runtimeRef:
+    kind: Runtime
+    name: agentcore
+  runtimeConfig:
+    region: ${AWS_REGION}
+    workdir: assets/agents/bankingsupport
+EOF
+
+arctl apply -f assets/agents/ithelpdesk/agent.yaml
+arctl apply -f - <<EOF
+apiVersion: ar.dev/v1alpha1
+kind: Deployment
+metadata:
+  name: ithelpdesk
+spec:
+  targetRef:
+    kind: Agent
+    name: ithelpdesk
+    tag: "1.0.0"
+  runtimeRef:
+    kind: Runtime
+    name: agentcore
+  runtimeConfig:
+    region: ${AWS_REGION}
+    workdir: assets/agents/ithelpdesk
+EOF
+
+arctl get deployments
+```
+
+Each deploys independently (its own clone + image build + AgentCore rollout) and shows up
+alongside `econresearch` in `arctl get deployments`. Chat with each from the **Instances** view
+(`http://${AR_IP}:12121/are/instances/`) — try:
+
+- `claimsupport`: "What's the status of claim CLM-10234, and what's the coverage limit on its
+  policy?"
+- `bankingsupport`: "What's the balance on ACC-100234 and what were the last few transactions?"
+- `ithelpdesk`: "What's the status of ticket INC-40126, and is there a KB article about VPN
+  access?"
+
 ## Troubleshooting
 
 | Symptom | Fix |
@@ -543,9 +628,15 @@ Return the cluster and the AWS account to the baseline:
 > `AR_AWS_ACCESS_KEY_ID` before running the IAM cleanup block.
 
 ```bash
-# Registry side: deployment + agent + runtime
+# Registry side: deployments + agents + runtime
 arctl delete deployment econresearch
 arctl delete agent econresearch --tag 1.0.0
+arctl delete deployment claimsupport
+arctl delete agent claimsupport --tag 1.0.0
+arctl delete deployment bankingsupport
+arctl delete agent bankingsupport --tag 1.0.0
+arctl delete deployment ithelpdesk
+arctl delete agent ithelpdesk --tag 1.0.0
 arctl delete runtime agentcore
 
 # AWS side: the cross-account role stack
