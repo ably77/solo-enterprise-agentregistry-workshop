@@ -19,4 +19,5 @@ spec:
     image: localhost:5001/econresearch:latest
     repository:
       url: "https://github.com/ably77/solo-enterprise-agentregistry-workshop"
+      branch: "main"
       subfolder: "assets/agents/econresearch"

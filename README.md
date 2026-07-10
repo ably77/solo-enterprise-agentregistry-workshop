@@ -69,9 +69,9 @@ you'll have:
 
 ## Agent Runtimes
 
-A three-part **AWS Bedrock AgentCore** series (requires an AWS account with Bedrock model access):
+A three-part **AWS Bedrock AgentCore** series (requires an AWS account you can administer):
 
-- [Part 1 — Integrate Agentregistry and AgentCore](labs/runtimes/agentcore-01-integration.md) — build the AWS side from zero (CLI, operator auth, Bedrock model access), grant the registry AWS access, generate the cross-account IAM role via `arctl runtime setup` + CloudFormation, and register the `agentcore` Runtime
+- [Part 1 — Integrate Agentregistry and AgentCore](labs/runtimes/agentcore-01-integration.md) — build the AWS side from zero (CLI, operator auth, Bedrock model availability), grant the registry AWS access, generate the cross-account IAM role via `arctl runtime setup` + CloudFormation, and register the `agentcore` Runtime
 - [Part 2 — Create Agents](labs/runtimes/agentcore-02-create-agents.md) — how the four vertical-use-case agents were built: the `arctl init agent` ADK/Bedrock scaffold, one customized `agent.py` (snapshot data + function tools + grounding instruction), and the Git-sourced catalog entry — all four already checked in under `assets/agents/` (no AWS needed)
 - [Part 3 — Register and Deploy Agents to AgentCore](labs/runtimes/agentcore-03-deploy-agents.md) — publish `econresearch` (a Bedrock Claude-backed economic research agent) to the catalog, deploy it to AgentCore, chat from the UI and tail CloudWatch — then deploy [`claimsupport`](assets/agents/claimsupport/), [`bankingsupport`](assets/agents/bankingsupport/), and [`ithelpdesk`](assets/agents/ithelpdesk/) the same way
 
