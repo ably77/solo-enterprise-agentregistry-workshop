@@ -1,9 +1,10 @@
 # Register and Deploy Agents to AgentCore
 
-> **AWS Bedrock AgentCore series, Part 3 of 3**
+> **AWS Bedrock AgentCore series, Part 3 of 4**
 > [Part 1: Integrate Agentregistry and AgentCore](agentcore-01-integration.md) ·
 > [Part 2: Create Agents](agentcore-02-create-agents.md) ·
-> **Part 3: Register and Deploy Agents to AgentCore** (this lab)
+> **Part 3: Register and Deploy Agents to AgentCore** (this lab) ·
+> [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md)
 
 Publish the **`econresearch`** agent to the catalog and deploy it to the `agentcore` Runtime you
 registered in Part 1. Agentregistry clones the agent source from GitHub, builds the
@@ -264,8 +265,8 @@ stack, the `agentregistry-deployer` IAM user, and the `aws.*` helm values), run
 
 ## Next
 
-- Wire live data into the agent: register the [FRED MCP server](../mcp/fred-mcp.md) and attach it
-  to `econresearch` via `spec.mcpServers`; the agent's MCP plumbing (`mcp_tools.py`) is already
-  in place.
+- [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md) does exactly
+  what this agent teases: live FRED data via `spec.mcpServers` through Agentgateway — plus the
+  LLM traffic routed through the same gateway.
 - Govern who can see and submit the new assets: [AccessPolicy / RBAC](../access-control/access-policies.md)
   and [Approval Workflows](../access-control/approval-workflows.md).

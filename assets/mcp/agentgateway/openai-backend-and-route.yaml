@@ -1,0 +1,43 @@
+# OpenAI LLM backend + /openai route on the shared parent Gateway
+# (agentregistry-gateway). Used by labs/runtimes/agentcore-04-agentgateway-llm-mcp.md.
+#
+# The provider is unpinned (openai: {}): the calling agent chooses the model
+# (the lab's econresearch-agw sends gpt-5.4-nano). Pin `openai.model` here to
+# enforce one model at the gateway instead.
+#
+# Requires a Secret named `openai-secret` in agentgateway-system holding the
+# OpenAI API key under the `Authorization` key. The lab creates it from
+# $OPENAI_API_KEY; it is intentionally NOT checked into this repo. The
+# gateway injects the key upstream, so clients never send one.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayBackend
+metadata:
+  name: openai
+  namespace: agentgateway-system
+spec:
+  ai:
+    provider:
+      openai: {}
+  policies:
+    auth:
+      secretRef:
+        name: openai-secret
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: openai-llm
+  namespace: agentgateway-system
+spec:
+  parentRefs:
+    - name: agentregistry-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /openai
+      backendRefs:
+        - name: openai
+          namespace: agentgateway-system
+          group: agentgateway.dev
+          kind: AgentgatewayBackend

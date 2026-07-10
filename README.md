@@ -69,11 +69,12 @@ you'll have:
 
 ## Agent Runtimes
 
-A three-part **AWS Bedrock AgentCore** series (requires an AWS account you can administer):
+A four-part **AWS Bedrock AgentCore** series (requires an AWS account you can administer):
 
 - [Part 1 — Integrate Agentregistry and AgentCore](labs/runtimes/agentcore-01-integration.md) — build the AWS side from zero (CLI, operator auth, Bedrock model availability), grant the registry AWS access, generate the cross-account IAM role via `arctl runtime setup` + CloudFormation, and register the `agentcore` Runtime
 - [Part 2 — Create Agents](labs/runtimes/agentcore-02-create-agents.md) — how the four vertical-use-case agents were built: the `arctl init agent` ADK/Bedrock scaffold, one customized `agent.py` (snapshot data + function tools + grounding instruction), and the Git-sourced catalog entry — all four already checked in under `assets/agents/` (no AWS needed)
 - [Part 3 — Register and Deploy Agents to AgentCore](labs/runtimes/agentcore-03-deploy-agents.md) — publish `econresearch` (a Bedrock Claude-backed economic research agent) to the catalog, deploy it to AgentCore, chat from the UI and tail CloudWatch — then deploy [`claimsupport`](assets/agents/claimsupport/), [`bankingsupport`](assets/agents/bankingsupport/), and [`ithelpdesk`](assets/agents/ithelpdesk/) the same way
+- [Part 4 — LLM and MCP Through Agentgateway](labs/runtimes/agentcore-04-agentgateway-llm-mcp.md) — extend `econresearch` into [`econresearch-agw`](assets/agents/econresearch-agw/): OpenAI (`gpt-5.4-nano`) LLM calls through an Agentgateway `/openai` route (key held in a k8s Secret at the gateway) and live FRED data via the FRED MCP server at `/registry/fred`, both planes on one gateway (requires a publicly reachable gateway LB)
 
 ## Access Control
 
@@ -121,7 +122,8 @@ fe-enterprise-agentregistry-workshop/
 │   ├── runtimes/
 │   │   ├── agentcore-01-integration.md   # wire the registry to AWS + register the Runtime
 │   │   ├── agentcore-02-create-agents.md # how the ADK/Bedrock example agents were built
-│   │   └── agentcore-03-deploy-agents.md # publish + deploy to AgentCore, chat, CloudWatch
+│   │   ├── agentcore-03-deploy-agents.md # publish + deploy to AgentCore, chat, CloudWatch
+│   │   └── agentcore-04-agentgateway-llm-mcp.md # LLM + FRED MCP through Agentgateway
 │   └── access-control/
 │       ├── access-policies.md
 │       └── approval-workflows.md

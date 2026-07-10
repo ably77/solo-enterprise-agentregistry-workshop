@@ -1,9 +1,10 @@
 # Integrate Agentregistry and AgentCore
 
-> **AWS Bedrock AgentCore series, Part 1 of 3**
+> **AWS Bedrock AgentCore series, Part 1 of 4**
 > **Part 1: Integrate Agentregistry and AgentCore** (this lab) ·
 > [Part 2: Create Agents](agentcore-02-create-agents.md) ·
-> [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md)
+> [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md) ·
+> [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md)
 
 Wire agentregistry to **AWS Bedrock AgentCore**: build the AWS side from zero, grant the registry
 server AWS access, generate the cross-account IAM role it assumes at deploy time, and register
@@ -516,3 +517,5 @@ unset AWS_ACCOUNT_ID AWS_REGION AWS_ROLE_ARN AWS_EXTERNAL_ID AR_AWS_ACCESS_KEY_I
   AWS required).
 - [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md) publishes
   `econresearch` to the catalog and deploys it to the runtime you just registered.
+- [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md) extends
+  `econresearch` so its LLM and MCP traffic both route through Agentgateway.

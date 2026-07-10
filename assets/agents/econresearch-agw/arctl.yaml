@@ -1,0 +1,4 @@
+framework: adk
+language: python
+modelProvider: openai
+modelName: gpt-5.4-nano

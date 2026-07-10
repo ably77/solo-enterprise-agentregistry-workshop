@@ -1,0 +1,19 @@
+{
+  "name": "econresearch-agw",
+  "description": "Economic research assistant for financial services teams — answers questions from live FRED data, with LLM and MCP traffic routed through Agentgateway.",
+  "url": "http://localhost:8080",
+  "version": "1.0.0",
+  "capabilities": {
+    "streaming": true
+  },
+  "defaultInputModes": ["text"],
+  "defaultOutputModes": ["text"],
+  "skills": [
+    {
+      "id": "economic-research",
+      "name": "Economic Research",
+      "description": "Search and fetch live U.S. economic data series from FRED (via the fred_browse, fred_search, and fred_get_series MCP tools), with series IDs and observation dates cited.",
+      "tags": ["finance", "economics", "research"]
+    }
+  ]
+}
