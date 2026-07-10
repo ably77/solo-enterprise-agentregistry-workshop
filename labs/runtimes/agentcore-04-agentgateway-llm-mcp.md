@@ -339,12 +339,38 @@ aws logs tail "/aws/bedrock-agentcore/runtimes/<runtime-id>-DEFAULT" \
   --region "${AWS_REGION}" --follow
 ```
 
-and the gateway sees the LLM and MCP traffic:
+and the gateway sees the LLM and MCP traffic. Note the time, ask the chat question, then filter
+the gateway's logs to just the two routes this agent uses — `--tail=50` on its own is too broad
+on a shared cluster (other MCP deployments hit the same gateway) to prove the traffic is *yours*:
 
 ```bash
-kubectl -n agentgateway-system logs deploy/agentregistry-gateway --tail=50
-# LLM calls to /openai and MCP calls to /registry/fred, from the same agent
+kubectl -n agentgateway-system logs deploy/agentregistry-gateway --since=2m \
+  | grep -E "route=agentgateway-system/openai-llm|/registry/fred"
 ```
+
+Expected: one line per LLM call and per MCP tool call, interleaved by timestamp:
+
+```
+...route=agentgateway-system/openai-llm ... http.path=/openai/chat/completions ... protocol=llm gen_ai.provider.name=openai gen_ai.request.model=gpt-5.4-nano ... duration=1581ms
+...route=agentregistry-system/dep-default-fred-incluster-agw-<hash> ... http.path=/registry/fred ... protocol=mcp mcp.method.name=tools/call gen_ai.tool.name=fred_search mcp.session.id=<id> duration=312ms
+...route=agentregistry-system/dep-default-fred-incluster-agw-<hash> ... http.path=/registry/fred ... protocol=mcp mcp.method.name=tools/call gen_ai.tool.name=fred_get_series mcp.session.id=<id> duration=458ms
+...route=agentgateway-system/openai-llm ... http.path=/openai/chat/completions ... protocol=llm gen_ai.provider.name=openai gen_ai.request.model=gpt-5.4-nano ... duration=1206ms
+```
+
+Two things confirm this is genuinely *your* agent's traffic through the gateway, not noise from
+another deployment sharing it:
+
+- Every `/registry/fred` line for one chat turn carries the **same `mcp.session.id`** — one
+  session, opened by `econresearch-agw`, making multiple tool calls (`fred_search` to find the
+  right series, then `fred_get_series` to read it).
+- The `/openai` and `/registry/fred` lines interleave in time (LLM call → tool calls → LLM call
+  with the tool results → …), which is the model/tool loop for a single turn, not two unrelated
+  agents calling the gateway at the same time.
+
+The `gen_ai.*` fields are themselves useful signal: `gen_ai.usage.input_tokens` /
+`output_tokens` / `agw.ai.usage.cost.total` on the LLM lines, and `gen_ai.tool.name` on the MCP
+lines, are exactly what you'd want in a real deployment to attribute spend and tool usage per
+agent from the gateway alone — without instrumenting the agent itself.
 
 ## Troubleshooting
 

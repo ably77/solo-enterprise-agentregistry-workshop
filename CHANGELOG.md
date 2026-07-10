@@ -1,5 +1,9 @@
 # Changelog
 
+0.1.1 - (7-10-26)
+---
+- Docs fix in `labs/runtimes/agentcore-04-agentgateway-llm-mcp.md`
+
 0.1.0 - (7-10-26)
 ---
 - Added `labs/runtimes/agentcore-cleanup.md` — consolidated teardown for all four AgentCore labs; each lab's inline Cleanup section now points here instead of repeating commands, with breadcrumb nav and cost-note cross-references updated across `agentcore-01/02/03/04-*.md` and `README.md` (Agent Runtimes list + repo layout tree)
