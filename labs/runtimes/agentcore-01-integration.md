@@ -361,6 +361,24 @@ AgentCore, covering the Bedrock AgentCore APIs, IAM (per-agent execution roles),
 artifacts), and CloudWatch Logs. `--role-name` is the one piece of this `arctl` lets you
 parameterize, so give it a prefixed name too:
 
+> **`runtime setup` needs a bearer token — your device login is not enough.** Generating the
+> template is a registry API call, and unlike the other `arctl` commands in this series,
+> `arctl runtime setup` authenticates only through the `ARCTL_API_TOKEN` env var (or its
+> `--registry-token` flag) — it does **not** read the session your `arctl user login` stored. Run
+> it without a token and it fails with `API returned status 401: Unauthorized` (leaving
+> `/tmp/agentregistry-cf.yaml` empty). Mint an admin token first, using the values your shell
+> context already sourced:
+>
+> ```bash
+> export ARCTL_API_TOKEN=$(curl -s -X POST "${OIDC_ISSUER}/protocol/openid-connect/token" \
+>   -d grant_type=password -d client_id="${ARE_CLI_CLIENT_ID}" \
+>   -d username=admin -d password=admin -d "scope=openid profile" | jq -r .access_token)
+> ```
+>
+> The token expires after a few minutes — if a later run hits the 401 again, re-run this export.
+> Once the template is generated, `unset ARCTL_API_TOKEN` to let subsequent `arctl` commands go
+> back to your device-login session.
+
 ```bash
 export AR_ROLE_NAME="${AR_USER_PREFIX}-AgentRegistryAccessRole"
 
@@ -517,6 +535,7 @@ to carry over is `AWS_REGION`.
 |---|---|
 | `helm upgrade` succeeded but the server can't reach AWS | The server pod may predate the new `aws.*` values. `kubectl rollout restart deployment/agentregistry-enterprise-server -n agentregistry-system` and re-check. |
 | `create-stack` fails with `InsufficientCapabilitiesException` | You omitted `--capabilities CAPABILITY_NAMED_IAM`. Re-run the `create-stack` command from step 2 as written. |
+| `arctl runtime setup` fails with `API returned status 401: Unauthorized`, or `/tmp/agentregistry-cf.yaml` comes out empty | `runtime setup` authenticates only via `ARCTL_API_TOKEN` — it ignores your `arctl user login` session. Mint a token per the callout in step 2 and re-run. Note the token expires after a few minutes. |
 
 A wrong `externalId` or mistyped role ARN won't error in this lab at all; it surfaces as a failed
 Deployment condition in [Part 3](agentcore-03-deploy-agents.md#troubleshooting).

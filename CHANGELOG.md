@@ -1,5 +1,10 @@
 # Changelog
 
+0.1.2 - (7-10-26)
+---
+- Added an opt-in AgentCore e2e mode (`./e2e-test.sh agentcore` / `agentcore-cleanup` / `--include-agentcore`): new `e2e-agentcore.sh` module automating the AgentCore labs Parts 1 + 3, plus optional gitignored `./secrets` sourcing and a billing banner for left-running AWS resources
+- Documented + worked around an `arctl` auth quirk: `arctl runtime setup` authenticates only via `ARCTL_API_TOKEN` (device-login session ignored → `401`), so `agentcore-01-integration.md` step 2 gained a mint-a-token callout + troubleshooting row and the e2e module mints the token itself
+
 0.1.1 - (7-10-26)
 ---
 - Docs fix in `labs/runtimes/agentcore-04-agentgateway-llm-mcp.md`
