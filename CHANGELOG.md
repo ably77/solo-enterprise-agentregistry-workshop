@@ -2,11 +2,14 @@
 
 0.0.8 - (7-9-26)
 ---
-- Added AWS Bedrock AgentCore runtime lab at `labs/runtimes/aws-bedrock-agentcore.md`: The lab teaches the external dependencies from zero (step 0): operator AWS CLI setup, region choice, Bedrock model access enablement, and the two-identity model (operator vs registry deployer credentials + cross-account role)
+- Added a three-part AWS Bedrock AgentCore lab series at `labs/runtimes/`:
+  - `agentcore-01-integration.md` — teaches the external dependencies from zero (step 0): operator AWS CLI setup, region choice, Bedrock model access enablement, and the two-identity model (operator vs registry deployer credentials + cross-account role); registers the `agentcore` Runtime
+  - `agentcore-02-create-agents.md` — high-level walkthrough of how the four example agents were created (`arctl init agent` ADK/Bedrock scaffold, one customized `agent.py`, Git-sourced catalog entry); the agents are already checked in, so no push-to-GitHub step
+  - `agentcore-03-deploy-agents.md` — publish + deploy `econresearch` (and the three other agents) to AgentCore, chat from the UI, tail CloudWatch; deploy-scoped troubleshooting and cleanup
 - Added `assets/agents/econresearch/` — a new vertical-use-case agent (FSI economic research assistant): Google ADK Python on Bedrock Claude (`us.anthropic.claude-sonnet-4-6`) with tools over a curated FRED-style indicator snapshot
 - Added `assets/runtimes/agentcore/` — the two IAM policies the registry server needs for AgentCore (from the docs quickstart)
 - New **Agent Runtimes** section in `README.md` (TOC, use cases, repo layout updated)
-- Added three agent examples in `assets/agents/` — `claimsupport`, `bankingsupport`, and `ithelpdesk`, insurance claim, personal banking, and IT helpdesk support assistants matching econresearch's ADK/Bedrock scaffold, wired into the AgentCore lab and README
+- Added three agent examples in `assets/agents/` — `claimsupport`, `bankingsupport`, and `ithelpdesk`, insurance claim, personal banking, and IT helpdesk support assistants matching econresearch's ADK/Bedrock scaffold, wired into the AgentCore labs and README
 
 0.0.7 - (7-8-26)
 ---

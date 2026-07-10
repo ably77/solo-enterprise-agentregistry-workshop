@@ -50,6 +50,9 @@ temp/
 # Agent session scratch (task briefs, review packages, progress ledger)
 .superpowers/
 
+# Playwright MCP browser session artifacts
+.playwright-mcp/
+
 # Design specs / implementation plans (working docs, not workshop content)
 /docs/
 .worktrees/

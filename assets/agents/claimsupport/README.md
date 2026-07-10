@@ -2,7 +2,9 @@
 
 An insurance claim support assistant, built with Google ADK (Python) on AWS
 Bedrock Claude (`us.anthropic.claude-sonnet-4-6`). Used by the
-[AWS Bedrock AgentCore lab](../../../labs/runtimes/aws-bedrock-agentcore.md).
+[AWS Bedrock AgentCore labs](../../../labs/runtimes/agentcore-01-integration.md) — walked
+through in [Part 2](../../../labs/runtimes/agentcore-02-create-agents.md) and deployed in
+[Part 3](../../../labs/runtimes/agentcore-03-deploy-agents.md).
 
 Two function tools answer questions from a curated offline snapshot of
 sample insurance claims and policies:

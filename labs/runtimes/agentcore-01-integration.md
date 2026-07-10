@@ -1,26 +1,29 @@
-# AWS Bedrock AgentCore Runtime
+# Integrate Agentregistry and AgentCore
 
-Register **AWS Bedrock AgentCore** as an agentregistry `Runtime` and deploy a realistic
-vertical-use-case agent to it: **`econresearch`**, an economic research assistant for financial
-services teams, backed by Bedrock Claude with tools over a curated snapshot of U.S. economic
-indicators. Agentregistry clones the agent source from GitHub, builds the AgentCore-compatible
-image, hands it to AgentCore, and you watch the Deployment go `deploying` → `deployed` — then chat
-with the agent from the registry UI and tail its CloudWatch logs.
+> **AWS Bedrock AgentCore series — Part 1 of 3**
+> **Part 1: Integrate Agentregistry and AgentCore** (this lab) ·
+> [Part 2: Create Agents](agentcore-02-create-agents.md) ·
+> [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md)
 
-Unlike the MCP labs, the workload doesn't run on your cluster: the registry drives a **cloud
+Wire agentregistry to **AWS Bedrock AgentCore**: build the AWS side from zero, grant the registry
+server AWS access, generate the cross-account IAM role it assumes at deploy time, and register
+**AgentCore** as an agentregistry `Runtime` named `agentcore`. By the end, the catalog has a live
+cloud deploy target — [Part 3](agentcore-03-deploy-agents.md) publishes agents and deploys them
+to it.
+
+Unlike the MCP labs, the workload won't run on your cluster: the registry drives a **cloud
 runtime** in your AWS account through a scoped cross-account IAM role.
 
-> **Cost note:** this lab creates real AWS resources (an AgentCore runtime, an ECR/S3-backed
-> image build, CloudWatch logs) and invokes a Bedrock model. Costs are small but non-zero; the
-> Cleanup section removes everything.
+> **Cost note:** this part creates only IAM principals and a CloudFormation stack — no billable
+> compute. The resources that cost money (the AgentCore runtime, image builds, CloudWatch logs,
+> Bedrock invocations) appear in Part 3, and its Cleanup removes them.
 
 ## Lab Objectives
 
+- Set up the AWS side from zero: CLI, operator credentials, region, Bedrock model access
 - Grant the registry server AWS access (IAM policies + user, then `helm upgrade`)
 - Generate the cross-account IAM role with `arctl runtime setup bedrock-agent-core` + CloudFormation
 - Register the `agentcore` Runtime in agentregistry
-- Publish the `econresearch` Agent to the catalog and deploy it to AgentCore
-- Chat with the deployed agent in the registry UI and locate its CloudWatch log group
 
 ## Pre-requisites
 
@@ -50,15 +53,18 @@ export ARCTL_API_BASE_URL="http://${AR_IP}:12121"
 
 ## Architecture
 
+The full flow across the three parts — this part builds everything from the registry server down
+to the AgentCore runtime boundary; Part 3 drives a deploy through it:
+
 ```
 arctl / registry UI
   │
   ▼
 [ agentregistry server (agentregistry-system) ]
-  │  AWS credentials (helm values: aws.*)
+  │  AWS credentials (helm values: aws.*)          ◀── Step 1
   │  sts:AssumeRole + ExternalId
   ▼
-[ cross-account IAM role (CloudFormation stack) ]
+[ cross-account IAM role (CloudFormation stack) ]  ◀── Step 2
   │
   ├── clones agent source ──▶ github.com/.../assets/agents/econresearch
   ├── builds the AgentCore image from its Dockerfile
@@ -67,24 +73,6 @@ arctl / registry UI
   │
   └── logs ──▶ CloudWatch /aws/bedrock-agentcore/runtimes/<runtime-id>-DEFAULT
 ```
-
-## The Agent
-
-[`assets/agents/econresearch/`](../../assets/agents/econresearch/) is a Google ADK (Python)
-agent scaffolded with `arctl init agent` and customized for a financial-services use case. Two
-function tools ground it in a curated offline snapshot of key U.S. indicators:
-
-| FRED series | Indicator |
-|---|---|
-| `FEDFUNDS` | Effective Federal Funds Rate |
-| `CPIAUCSL` | Consumer Price Index (All Urban Consumers) |
-| `UNRATE` | Unemployment Rate |
-| `DGS10` | 10-Year Treasury Constant Maturity Rate |
-| `MORTGAGE30US` | 30-Year Fixed Rate Mortgage Average |
-
-The instruction forces tool-grounded answers with series IDs and as-of dates cited, and is
-explicit that the data is a demo snapshot rather than live market data. (A natural follow-up:
-replace the snapshot with the [FRED MCP server](../mcp/fred-mcp.md) called through Agentgateway.)
 
 ## 0. Set Up the AWS Side
 
@@ -162,7 +150,7 @@ downstream lands in this account.
 
 ### 0.3 Pick a Region
 
-Both **Bedrock AgentCore** and the **Claude model** the agent calls must be available in the region
+Both **Bedrock AgentCore** and the **Claude model** the agents call must be available in the region
 you pick — not every AWS region carries both. `us-east-1` has them and is the region this lab
 assumes; use it unless you have a specific reason not to. Set the region and capture your account
 ID:
@@ -192,7 +180,7 @@ per account **and** per region. There's no CLI to enable it; do it once in the c
 > succeeds (it's how AWS makes you accept each provider's EULA). Enabling Claude in `us-east-1`
 > does nothing for `us-west-2`; grant it in the region you set above. Skipping this doesn't fail
 > the deploy — the runtime comes up fine and then throws `AccessDeniedException` on the first
-> chat (see Troubleshooting).
+> chat (see [Part 3's Troubleshooting](agentcore-03-deploy-agents.md#troubleshooting)).
 >
 > **Inference profile vs. plain model ID.** The `us.` prefix on `us.anthropic.claude-sonnet-4-6`
 > marks a **cross-region inference profile** — a routing alias that load-balances your request
@@ -331,7 +319,7 @@ and layer only your `--set` overrides on top — without it, the upgrade would r
 configured in 001 back to chart defaults. The chart renders the `aws.*` values into a Kubernetes
 `Secret` and injects them into the server pod's environment; the `--wait` plus `rollout status`
 force and confirm a fresh pod that actually picks up the new credentials (a running pod keeps its
-old environment). If a pod ever predates the change, the last Troubleshooting row forces a restart.
+old environment). If a pod ever predates the change, the Troubleshooting row below forces a restart.
 
 ## 2. Create the Cross-Account IAM Role
 
@@ -443,184 +431,31 @@ virtual-default      Virtual
 > config and only *used* lazily, at deploy time, when the registry actually attempts the
 > `sts:AssumeRole`. So a wrong `externalId` or a mistyped ARN will `apply` cleanly here and only
 > surface later as a failed **Deployment** condition (see the "IAM role not assumable" row in
-> Troubleshooting) — not as an error on this step.
+> [Part 3's Troubleshooting](agentcore-03-deploy-agents.md#troubleshooting)) — not as an error on
+> this step.
 
-## 4. Publish the `econresearch` Agent
-
-The catalog entry points at this repo — agentregistry clones
-`assets/agents/econresearch/` and builds its Dockerfile at deploy time:
-
-```bash
-cat assets/agents/econresearch/agent.yaml
-arctl apply -f assets/agents/econresearch/agent.yaml
-arctl get agents
-```
-
-## 5. Deploy the Agent to AgentCore
-
-```bash
-arctl apply -f - <<EOF
-apiVersion: ar.dev/v1alpha1
-kind: Deployment
-metadata:
-  name: econresearch
-spec:
-  targetRef:
-    kind: Agent
-    name: econresearch
-    tag: "1.0.0"
-  runtimeRef:
-    kind: Runtime
-    name: agentcore
-  runtimeConfig:
-    region: ${AWS_REGION}
-    workdir: assets/agents/econresearch
-EOF
-```
-
-Watch it progress — the clone + image build + AgentCore rollout takes a few minutes:
-
-```bash
-arctl get deployments
-arctl get deployment econresearch -o yaml
-```
-
-The Deployment moves through `deploying` → `deployed`. Under the hood, that transition is several
-distinct phases: the registry (1) assumes the cross-account role for short-lived credentials,
-(2) clones the Git subfolder recorded on the Agent (`assets/agents/econresearch`) from the catalog
-source, (3) builds that Dockerfile into an image and pushes it into your AWS account, and
-(4) creates the AgentCore runtime from the image. That's why the **first** deploy takes minutes
-(the image build dominates), and why a failure's `status.conditions` usually points at one specific
-phase — an IAM/assume-role error, a clone error, or a build error. You can also watch build
-progress in the UI's **Instances** view (`http://${AR_IP}:12121/are/instances/`) under
-**Instance Logs**.
-
-## 6. Chat with the Agent + Tail CloudWatch
-
-Open the **Instances** view in the UI (`http://${AR_IP}:12121/are/instances/`), select
-`econresearch`, and ask it something a financial-services analyst would:
-
-> Where are 30-year mortgage rates relative to the 10-year treasury, and what does that spread
-> look like?
-
-The answer should be grounded in tool calls, citing `MORTGAGE30US` / `DGS10` and the as-of dates
-of the snapshot.
-
-AgentCore creates a **separate CloudWatch log group per runtime** named
-`/aws/bedrock-agentcore/runtimes/<runtime-id>-DEFAULT` (the `-DEFAULT` suffix is the runtime
-version's default endpoint), so the id changes when you redeploy a new version. This is where your
-agent's stdout/stderr and the AgentCore framework logs land — the first place to look when the
-agent misbehaves at runtime. The `<runtime-id>` appears in
-`arctl get deployment econresearch -o yaml` under `status`:
-
-```bash
-aws logs describe-log-groups \
-  --region "${AWS_REGION}" \
-  --log-group-name-prefix /aws/bedrock-agentcore/runtimes/
-
-# Tail the active group (substitute your <runtime-id>):
-aws logs tail "/aws/bedrock-agentcore/runtimes/<runtime-id>-DEFAULT" \
-  --region "${AWS_REGION}" --follow
-```
-
-## 7. Deploy More Example Agents (optional)
-
-The catalog has three more vertical-use-case example agents built the same way as
-`econresearch` — same ADK/Bedrock scaffold, same `agentcore` Runtime from steps 1-3, no new AWS
-setup required:
-
-| Agent | Use case | Tools |
-|---|---|---|
-| [`claimsupport`](../../assets/agents/claimsupport/) | Insurance claim support | `get_claim_status`, `get_policy_coverage` |
-| [`bankingsupport`](../../assets/agents/bankingsupport/) | Personal banking support | `get_account_summary`, `list_recent_transactions` |
-| [`ithelpdesk`](../../assets/agents/ithelpdesk/) | Internal IT helpdesk | `get_ticket_status`, `search_kb_articles` |
-
-Publish and deploy each one the same way you did `econresearch` in steps 4-5:
-
-```bash
-arctl apply -f assets/agents/claimsupport/agent.yaml
-arctl apply -f - <<EOF
-apiVersion: ar.dev/v1alpha1
-kind: Deployment
-metadata:
-  name: claimsupport
-spec:
-  targetRef:
-    kind: Agent
-    name: claimsupport
-    tag: "1.0.0"
-  runtimeRef:
-    kind: Runtime
-    name: agentcore
-  runtimeConfig:
-    region: ${AWS_REGION}
-    workdir: assets/agents/claimsupport
-EOF
-
-arctl apply -f assets/agents/bankingsupport/agent.yaml
-arctl apply -f - <<EOF
-apiVersion: ar.dev/v1alpha1
-kind: Deployment
-metadata:
-  name: bankingsupport
-spec:
-  targetRef:
-    kind: Agent
-    name: bankingsupport
-    tag: "1.0.0"
-  runtimeRef:
-    kind: Runtime
-    name: agentcore
-  runtimeConfig:
-    region: ${AWS_REGION}
-    workdir: assets/agents/bankingsupport
-EOF
-
-arctl apply -f assets/agents/ithelpdesk/agent.yaml
-arctl apply -f - <<EOF
-apiVersion: ar.dev/v1alpha1
-kind: Deployment
-metadata:
-  name: ithelpdesk
-spec:
-  targetRef:
-    kind: Agent
-    name: ithelpdesk
-    tag: "1.0.0"
-  runtimeRef:
-    kind: Runtime
-    name: agentcore
-  runtimeConfig:
-    region: ${AWS_REGION}
-    workdir: assets/agents/ithelpdesk
-EOF
-
-arctl get deployments
-```
-
-Each deploys independently (its own clone + image build + AgentCore rollout) and shows up
-alongside `econresearch` in `arctl get deployments`. Chat with each from the **Instances** view
-(`http://${AR_IP}:12121/are/instances/`) — try:
-
-- `claimsupport`: "What's the status of claim CLM-10234, and what's the coverage limit on its
-  policy?"
-- `bankingsupport`: "What's the balance on ACC-100234 and what were the last few transactions?"
-- `ithelpdesk`: "What's the status of ticket INC-40126, and is there a KB article about VPN
-  access?"
+**The integration is complete.** The registry holds the deployer credentials, the cross-account
+role exists with its trust handshake, and the catalog has an `agentcore` deploy target. The role
+ARN and external ID are now stored on the Runtime, so the only environment variable Part 3 needs
+to carry over is `AWS_REGION`.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| Deployment condition: IAM role not assumable | The `externalId` in the Runtime must match the role's trust policy. Re-check step 2's `AWS_EXTERNAL_ID` against `grep -i externalid /tmp/agentregistry-cf.yaml`, re-apply the Runtime. |
-| Deployment condition: image build failed | Check the registry server logs: `kubectl logs -n agentregistry-system deploy/agentregistry-enterprise-server --tail=100` |
-| Agent deploys but replies with a Bedrock `AccessDeniedException` | Bedrock **model access** for Anthropic Claude isn't enabled in `${AWS_REGION}`. Enable it in the AWS console (Amazon Bedrock → Model access) — no redeploy needed. |
-| Stuck in `deploying` | Inspect `status.conditions` in `arctl get deployment econresearch -o yaml`, then the server logs (above). CloudFormation/IAM changes can take ~1 min to propagate on first deploy. |
 | `helm upgrade` succeeded but the server can't reach AWS | The server pod may predate the new `aws.*` values. `kubectl rollout restart deployment/agentregistry-enterprise-server -n agentregistry-system` and re-check. |
+| `create-stack` fails with `InsufficientCapabilitiesException` | You omitted `--capabilities CAPABILITY_NAMED_IAM` — re-run the `create-stack` command from step 2 as written. |
+
+A wrong `externalId` or mistyped role ARN won't error in this lab at all — it surfaces as a failed
+Deployment condition in [Part 3](agentcore-03-deploy-agents.md#troubleshooting).
 
 ## Cleanup
 
-Return the cluster and the AWS account to the baseline:
+**Continuing to [Part 2](agentcore-02-create-agents.md) / [Part 3](agentcore-03-deploy-agents.md)?
+Skip this** — everything below is what those labs build on. Run it only to return the cluster and
+the AWS account to the baseline. If you deployed agents in Part 3, run
+[Part 3's Cleanup](agentcore-03-deploy-agents.md#cleanup) first: Deployments must be deleted
+before the Runtime they target.
 
 > Running Cleanup in a fresh shell? Re-run the Pre-requisites shell context and step 0.3
 > (`AWS_REGION`, `AWS_ACCOUNT_ID`) first, and recover the deployer's access-key ID with
@@ -628,15 +463,7 @@ Return the cluster and the AWS account to the baseline:
 > `AR_AWS_ACCESS_KEY_ID` before running the IAM cleanup block.
 
 ```bash
-# Registry side: deployments + agents + runtime
-arctl delete deployment econresearch
-arctl delete agent econresearch --tag 1.0.0
-arctl delete deployment claimsupport
-arctl delete agent claimsupport --tag 1.0.0
-arctl delete deployment bankingsupport
-arctl delete agent bankingsupport --tag 1.0.0
-arctl delete deployment ithelpdesk
-arctl delete agent ithelpdesk --tag 1.0.0
+# Registry side: the runtime
 arctl delete runtime agentcore
 
 # AWS side: the cross-account role stack
@@ -676,14 +503,10 @@ rm -f /tmp/agentregistry-cf.yaml /tmp/agentcore-runtime.yaml
 unset AWS_ACCOUNT_ID AWS_REGION AWS_ROLE_ARN AWS_EXTERNAL_ID AR_AWS_ACCESS_KEY_ID AR_AWS_SECRET_ACCESS_KEY
 ```
 
-> AgentCore also leaves behind the CloudWatch log group; remove it with
-> `aws logs delete-log-group --log-group-name "/aws/bedrock-agentcore/runtimes/<runtime-id>-DEFAULT" --region "${AWS_REGION}"`
-> if you want a fully clean account.
-
 ## Next
 
-- Wire live data into the agent: register the [FRED MCP server](../mcp/fred-mcp.md) and attach it
-  to `econresearch` via `spec.mcpServers` — the agent's MCP plumbing (`mcp_tools.py`) is already
-  in place.
-- Govern who can see and submit the new assets: [AccessPolicy / RBAC](../access-control/access-policies.md)
-  and [Approval Workflows](../access-control/approval-workflows.md).
+- [Part 2 — Create Agents](agentcore-02-create-agents.md): the anatomy of an AgentCore-deployable
+  agent — the `econresearch` ADK/Bedrock scaffold, its tools, and its catalog entry (no AWS
+  required).
+- [Part 3 — Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md): publish
+  `econresearch` to the catalog and deploy it to the runtime you just registered.

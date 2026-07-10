@@ -69,8 +69,11 @@ you'll have:
 
 ## Agent Runtimes
 
-- [AWS Bedrock AgentCore](labs/runtimes/aws-bedrock-agentcore.md) — register AgentCore as a cloud `Runtime` (cross-account IAM role via `arctl runtime setup` + CloudFormation) and deploy `econresearch`, a Bedrock Claude-backed economic research agent, from the catalog to AWS (~30 min; requires an AWS account with Bedrock model access)
-- [`claimsupport`](assets/agents/claimsupport/), [`bankingsupport`](assets/agents/bankingsupport/), [`ithelpdesk`](assets/agents/ithelpdesk/) — three more example agents on the same ADK/Bedrock scaffold (insurance claim support, personal banking support, internal IT helpdesk), deployable to the same `agentcore` Runtime — see [lab section 7](labs/runtimes/aws-bedrock-agentcore.md#7-deploy-more-example-agents-optional)
+A three-part **AWS Bedrock AgentCore** series (requires an AWS account with Bedrock model access):
+
+- [Part 1 — Integrate Agentregistry and AgentCore](labs/runtimes/agentcore-01-integration.md) — build the AWS side from zero (CLI, operator auth, Bedrock model access), grant the registry AWS access, generate the cross-account IAM role via `arctl runtime setup` + CloudFormation, and register the `agentcore` Runtime
+- [Part 2 — Create Agents](labs/runtimes/agentcore-02-create-agents.md) — how the four vertical-use-case agents were built: the `arctl init agent` ADK/Bedrock scaffold, one customized `agent.py` (snapshot data + function tools + grounding instruction), and the Git-sourced catalog entry — all four already checked in under `assets/agents/` (no AWS needed)
+- [Part 3 — Register and Deploy Agents to AgentCore](labs/runtimes/agentcore-03-deploy-agents.md) — publish `econresearch` (a Bedrock Claude-backed economic research agent) to the catalog, deploy it to AgentCore, chat from the UI and tail CloudWatch — then deploy [`claimsupport`](assets/agents/claimsupport/), [`bankingsupport`](assets/agents/bankingsupport/), and [`ithelpdesk`](assets/agents/ithelpdesk/) the same way
 
 ## Access Control
 
@@ -116,7 +119,9 @@ fe-enterprise-agentregistry-workshop/
 │   │   ├── field-rfe-skill.md         # Skill catalog asset (field-rfe example)
 │   │   └── changelog-skill.md         # Skill catalog asset (/changelog example)
 │   ├── runtimes/
-│   │   └── aws-bedrock-agentcore.md   # AgentCore cloud runtime + econresearch agent
+│   │   ├── agentcore-01-integration.md   # wire the registry to AWS + register the Runtime
+│   │   ├── agentcore-02-create-agents.md # how the ADK/Bedrock example agents were built
+│   │   └── agentcore-03-deploy-agents.md # publish + deploy to AgentCore, chat, CloudWatch
 │   └── access-control/
 │       ├── access-policies.md
 │       └── approval-workflows.md
@@ -124,8 +129,8 @@ fe-enterprise-agentregistry-workshop/
 │   ├── keycloak/                        # kustomize stack: deployment + agentregistry-enterprise.json (--import-realm)
 │   ├── prompts/                         # Prompt manifest
 │   ├── skills/                          # field-rfe + changelog SKILL.md (publishable skill sources)
-│   ├── agents/
-│   │   └── econresearch/                # Bedrock Claude economic research agent (ADK, Git source)
+│   ├── agents/                          # four ADK/Bedrock example agents (Git source):
+│   │   └── ...                          #   econresearch, claimsupport, bankingsupport, ithelpdesk
 │   ├── runtimes/
 │   │   └── agentcore/                   # IAM policies for the registry's AWS access
 │   └── mcp/
