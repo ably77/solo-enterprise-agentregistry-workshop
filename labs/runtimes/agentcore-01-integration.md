@@ -248,9 +248,18 @@ account). Same handshake either way; this lab just keeps both in one account for
 > instead of an IAM user; see the docs quickstart. This lab uses the IAM-user path because it
 > works from any Kubernetes cluster.
 
-Create the two IAM policies (checked in at `assets/runtimes/agentcore/`, verbatim from the
+Create the IAM policies (checked in at `assets/runtimes/agentcore/`, sourced from the
 [docs quickstart](https://docs.solo.io/agentregistry/latest/quickstart/agentcore/), with your
 `AR_USER_PREFIX` on the name so they don't collide with a teammate's copy in a shared account):
+
+> **Why three policies, not two.** The quickstart's AgentCore permissions (bedrock-agentcore,
+> IAM PassRole, S3, ECR, KMS, Secrets Manager, plus the observability/evaluation statements AWS
+> added more recently — `ObservabilityReadOnlyPermissions`, `TransactionSearch*`,
+> `AgentCoreEvaluation*`) now add up to ~7.4 KB minified, over AWS's **6,144-character hard quota**
+> for a single customer-managed policy (`aws iam create-policy` fails with
+> `LimitExceeded: Cannot exceed quota for PolicySize: 6144`). There's no way to fit it in one
+> managed policy, so it's split in two (`bedrock-agentcore-policy-part1.json` /
+> `-part2.json`), both attached to the deployer user below.
 
 ```bash
 aws iam create-policy \
@@ -258,11 +267,15 @@ aws iam create-policy \
   --policy-document file://assets/runtimes/agentcore/general-access-policy.json
 
 aws iam create-policy \
-  --policy-name "${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccess" \
-  --policy-document file://assets/runtimes/agentcore/bedrock-agentcore-policy.json
+  --policy-name "${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccessPart1" \
+  --policy-document file://assets/runtimes/agentcore/bedrock-agentcore-policy-part1.json
+
+aws iam create-policy \
+  --policy-name "${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccessPart2" \
+  --policy-document file://assets/runtimes/agentcore/bedrock-agentcore-policy-part2.json
 ```
 
-**What the two policies grant:**
+**What the policies grant:**
 
 - **`AgentRegistryGeneralAccess`** uses an `Allow` with **`NotAction`** rather than `Action`: it
   permits *every* AWS action **except** `iam:*`, `organizations:*`, and `account:*`. Read it as
@@ -274,8 +287,10 @@ aws iam create-policy \
   reads plus service-linked-role lifecycle calls
   (`iam:CreateServiceLinkedRole`/`iam:DeleteServiceLinkedRole`) and `iam:ListRoles` that the flow
   genuinely needs.
-- **`AgentRegistryBedrockAgentCoreAccess`** is the fine-grained half: the full `bedrock-agentcore:*`
-  runtime-management surface (create/update/delete runtimes), plus the scoped read paths AgentCore
+- **`AgentRegistryBedrockAgentCoreAccessPart1`/`Part2`** are the fine-grained half (split across
+  two policies purely to fit AWS's per-policy size quota — same permission set either way): the
+  full `bedrock-agentcore:*` runtime-management surface (create/update/delete runtimes), plus the
+  scoped read paths AgentCore
   needs: KMS decrypt, S3 code-artifact buckets, CloudWatch Logs, ECR. The key line is
   **`iam:PassRole`**: creating an AgentCore runtime means handing it an execution role to *run as*,
   and `PassRole` is the permission to do that hand-off. It's condition-scoped to
@@ -296,7 +311,11 @@ aws iam attach-user-policy \
 
 aws iam attach-user-policy \
   --user-name "${AR_DEPLOYER_USER}" \
-  --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccess"
+  --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccessPart1"
+
+aws iam attach-user-policy \
+  --user-name "${AR_DEPLOYER_USER}" \
+  --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccessPart2"
 
 ACCESS_KEY_OUTPUT=$(aws iam create-access-key --user-name "${AR_DEPLOYER_USER}")
 export AR_AWS_ACCESS_KEY_ID=$(echo "$ACCESS_KEY_OUTPUT" | jq -r '.AccessKey.AccessKeyId')
@@ -375,26 +394,29 @@ Condition:
     sts:ExternalId: "<generated-external-id>"
 ```
 
-> **The trust policy's principal isn't parameterized by `arctl`** — unlike `--role-name`, there's
-> no flag for the deployer username, so the generated template always trusts the literal
-> `agentregistry-deployer` principal (as shown above), regardless of what you actually named your
-> Step 1 user. Since this lab renamed that user to `${AR_DEPLOYER_USER}`, patch the template
-> before applying it, or `AssumeRole` will reject your deployer as an untrusted principal:
+> **Verify the trust policy covers your deployer before applying.** As of `arctl v2026.6.2`, the
+> generated template trusts the **AWS account root** (`Principal.AWS: arn:aws:iam::<account>:root`)
+> gated by the `ExternalId` condition, not a specific IAM user — so it already covers
+> `${AR_DEPLOYER_USER}` (or any other principal in the account) with no patching needed. Confirm
+> that shape before applying:
 >
 > ```bash
-> grep -q "user/agentregistry-deployer" /tmp/agentregistry-cf.yaml || {
->   echo "ERROR: expected principal 'agentregistry-deployer' not found in the generated" >&2
->   echo "template — arctl's output may have changed shape; inspect the file by hand" >&2
+> grep -qE 'arn:aws:iam::[0-9]+:root' /tmp/agentregistry-cf.yaml && echo "trusts account root — OK" || {
+>   echo "unexpected principal shape — arctl's output may have changed; inspect by hand" >&2
 >   echo "before applying it: /tmp/agentregistry-cf.yaml" >&2
 >   exit 1
 > }
+> ```
+>
+> If a future `arctl` version instead generates a template that trusts a **specific IAM user**
+> literally named `agentregistry-deployer`, patch it to your actual deployer name before applying
+> (this lab renamed that user to `${AR_DEPLOYER_USER}`), or `AssumeRole` will reject it as an
+> untrusted principal:
+>
+> ```bash
 > sed -i '' "s#user/agentregistry-deployer#user/${AR_DEPLOYER_USER}#" /tmp/agentregistry-cf.yaml
 > # GNU sed (Linux): drop the '' after -i
 > ```
->
-> The `grep -q` guard is there on purpose: if a future `arctl` version changes the template's
-> shape, this fails loudly instead of silently deploying a role that still trusts someone else's
-> `agentregistry-deployer` user.
 
 Deploy the stack and wait for it to complete (~1 minute):
 

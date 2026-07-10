@@ -96,12 +96,16 @@ aws iam delete-access-key --user-name "${AR_DEPLOYER_USER}" \
 aws iam detach-user-policy --user-name "${AR_DEPLOYER_USER}" \
   --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${AR_USER_PREFIX}-AgentRegistryGeneralAccess"
 aws iam detach-user-policy --user-name "${AR_DEPLOYER_USER}" \
-  --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccess"
+  --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccessPart1"
+aws iam detach-user-policy --user-name "${AR_DEPLOYER_USER}" \
+  --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccessPart2"
 aws iam delete-user --user-name "${AR_DEPLOYER_USER}"
 aws iam delete-policy \
   --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${AR_USER_PREFIX}-AgentRegistryGeneralAccess"
 aws iam delete-policy \
-  --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccess"
+  --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccessPart1"
+aws iam delete-policy \
+  --policy-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:policy/${AR_USER_PREFIX}-AgentRegistryBedrockAgentCoreAccessPart2"
 
 # Cluster side: drop the aws.* helm values (re-applies the 001 baseline values;
 # if /tmp/are-values.yaml is gone, recreate it from 001 step 4 first)
@@ -125,7 +129,8 @@ unset AR_USER_PREFIX AR_DEPLOYER_USER AR_STACK_NAME AR_ROLE_NAME
 > `alice-agentregistry-deployer` and `bob-agentregistry-deployer` instead of colliding on one
 > `agentregistry-deployer`. If you (or a teammate) set this up **before** that change, the
 > unprefixed names may still exist and may be shared — before deleting anything named exactly
-> `agentregistry-deployer`, `AgentRegistryGeneralAccess`, `AgentRegistryBedrockAgentCoreAccess`, or
+> `agentregistry-deployer`, `AgentRegistryGeneralAccess`,
+`AgentRegistryBedrockAgentCoreAccess`/`Part1`/`Part2`, or
 > `agentregistry-access-role` (no prefix), confirm with whoever else might have a `Runtime`
 > pointing at that role. Deleting it removes AgentCore access for everyone whose Runtime
 > references that `roleArn`, not just you.

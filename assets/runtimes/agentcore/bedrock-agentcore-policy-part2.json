@@ -1,0 +1,162 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "TransactionSearchApplicationSignalsPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "application-signals:StartDiscovery"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchApplicationSignalsCreateServiceLinkedRolePermissions",
+      "Effect": "Allow",
+      "Action": "iam:CreateServiceLinkedRole",
+      "Resource": "arn:aws:iam::*:role/aws-service-role/application-signals.cloudwatch.amazonaws.com/AWSServiceRoleForCloudWatchApplicationSignals",
+      "Condition": {
+        "StringLike": {
+          "iam:AWSServiceName": "application-signals.cloudwatch.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "CloudWatchApplicationSignalsGetRolePermissions",
+      "Effect": "Allow",
+      "Action": "iam:GetRole",
+      "Resource": "arn:aws:iam::*:role/aws-service-role/application-signals.cloudwatch.amazonaws.com/AWSServiceRoleForCloudWatchApplicationSignals"
+    },
+    {
+      "Sid": "CreateBedrockAgentCoreNetworkServiceLinkedRolePermissions",
+      "Effect": "Allow",
+      "Action": "iam:CreateServiceLinkedRole",
+      "Resource": "arn:aws:iam::*:role/aws-service-role/network.bedrock-agentcore.amazonaws.com/AWSServiceRoleForBedrockAgentCoreNetwork",
+      "Condition": {
+        "StringEquals": {
+          "iam:AWSServiceName": "network.bedrock-agentcore.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "CreateBedrockAgentCoreRuntimeIdentityServiceLinkedRolePermissions",
+      "Effect": "Allow",
+      "Action": "iam:CreateServiceLinkedRole",
+      "Resource": "arn:aws:iam::*:role/aws-service-role/runtime-identity.bedrock-agentcore.amazonaws.com/AWSServiceRoleForBedrockAgentCoreRuntimeIdentity",
+      "Condition": {
+        "StringEquals": {
+          "iam:AWSServiceName": "runtime-identity.bedrock-agentcore.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "CloudWatchApplicationSignalsCloudTrailPermissions",
+      "Effect": "Allow",
+      "Action": [
+        "cloudtrail:CreateServiceLinkedChannel"
+      ],
+      "Resource": "arn:aws:cloudtrail:*:*:channel/aws-service-channel/application-signals/*"
+    },
+    {
+      "Sid": "BedrockAgentCoreRuntimeS3WriteAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:CreateBucket",
+        "s3:PutBucketPolicy",
+        "s3:PutBucketVersioning",
+        "s3:PutObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::bedrock-agentcore-runtime-*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "s3:ResourceAccount": "${aws:PrincipalAccount}"
+        }
+      }
+    },
+    {
+      "Sid": "BedrockAgentCoreRuntimeS3ReadAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:GetObjectVersion",
+        "s3:ListBucket",
+        "s3:ListBucketVersions"
+      ],
+      "Resource": "arn:aws:s3:::*",
+      "Condition": {
+        "StringEquals": {
+          "s3:ResourceAccount": "${aws:PrincipalAccount}"
+        }
+      }
+    },
+    {
+      "Sid": "BedrockAgentCoreRuntimeS3ListAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListAllMyBuckets"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "s3:ResourceAccount": "${aws:PrincipalAccount}"
+        }
+      }
+    },
+    {
+      "Sid": "BedrockAgentCoreRuntimeECRAccess",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:DescribeRepositories",
+        "ecr:DescribeImages",
+        "ecr:ListImages"
+      ],
+      "Resource": [
+        "arn:aws:ecr:*:*:repository/*"
+      ]
+    },
+    {
+      "Sid": "AgentCoreEvaluationCloudWatchLogCreate",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup"
+      ],
+      "Resource": [
+        "arn:aws:logs:*:*:log-group:/aws/bedrock-agentcore/evaluations/*"
+      ]
+    },
+    {
+      "Sid": "AgentCoreEvaluationCloudWatchLogIndexAccess",
+      "Effect": "Allow",
+      "Action": [
+        "logs:PutIndexPolicy",
+        "logs:DescribeIndexPolicies"
+      ],
+      "Resource": [
+        "arn:aws:logs:*:*:log-group:aws/spans",
+        "arn:aws:logs:*:*:log-group:aws/spans:*"
+      ]
+    },
+    {
+      "Sid": "AgentCoreEvaluationBedrockInvokeAccess",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:*::foundation-model/*",
+        "arn:aws:bedrock:*:*:inference-profile/*"
+      ]
+    },
+    {
+      "Sid": "AgentCoreEvaluationLambdaAccess",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:InvokeFunction",
+        "lambda:GetFunction"
+      ],
+      "Resource": "arn:aws:lambda:*:*:function:*"
+    }
+  ]
+}
