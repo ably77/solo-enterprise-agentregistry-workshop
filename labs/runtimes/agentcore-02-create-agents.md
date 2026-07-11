@@ -1,10 +1,11 @@
 # Create Agents
 
-> **AWS Bedrock AgentCore series, Part 2 of 4**
+> **AWS Bedrock AgentCore series, Part 2 of 5**
 > [Part 1: Integrate Agentregistry and AgentCore](agentcore-01-integration.md) ·
 > **Part 2: Create Agents** (this lab) ·
 > [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md) ·
-> [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md) ·
+> [Part 4: Approval-Gated Agent Onboarding](agentcore-04-approval-onboarding.md) ·
+> [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md) ·
 > [Cleanup](agentcore-cleanup.md)
 
 This lab walks through how the workshop's four vertical-use-case agents were created. The same
@@ -172,7 +173,11 @@ entries and deploying, which is [Part 3](agentcore-03-deploy-agents.md).
 
 - [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md): publish
   `econresearch` to the catalog, deploy it to the `agentcore` Runtime from Part 1, chat with it
-  in the registry UI, and tail its CloudWatch logs, then do the same for the other three agents.
-- [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md): the same
+  in the registry UI, and tail its CloudWatch logs, then do the same for `claimsupport` and
+  `bankingsupport`.
+- [Part 4: Approval-Gated Agent Onboarding](agentcore-04-approval-onboarding.md): the fourth
+  agent, `ithelpdesk`, arrives through the governed path — staged by a non-admin submission,
+  deploy blocked until an admin approves.
+- [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md): the same
   agent recipe with the Bedrock adapter swapped for an OpenAI model behind Agentgateway, and
   the snapshot swapped for the live FRED MCP server.

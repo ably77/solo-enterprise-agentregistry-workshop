@@ -2,7 +2,7 @@
 
 The [`econresearch`](../econresearch/) agent, extended so that **both** of its
 data planes route through the workshop's in-cluster Agentgateway. Used by
-[Part 4 of the AWS Bedrock AgentCore labs](../../../labs/runtimes/agentcore-04-agentgateway-llm-mcp.md).
+[Part 5 of the AWS Bedrock AgentCore labs](../../../labs/runtimes/agentcore-05-agentgateway-llm-mcp.md).
 
 | Plane | econresearch | econresearch-agw |
 |---|---|---|

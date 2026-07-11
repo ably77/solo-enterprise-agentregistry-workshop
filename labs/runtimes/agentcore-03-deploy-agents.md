@@ -1,17 +1,20 @@
 # Register and Deploy Agents to AgentCore
 
-> **AWS Bedrock AgentCore series, Part 3 of 4**
+> **AWS Bedrock AgentCore series, Part 3 of 5**
 > [Part 1: Integrate Agentregistry and AgentCore](agentcore-01-integration.md) ·
 > [Part 2: Create Agents](agentcore-02-create-agents.md) ·
 > **Part 3: Register and Deploy Agents to AgentCore** (this lab) ·
-> [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md) ·
+> [Part 4: Approval-Gated Agent Onboarding](agentcore-04-approval-onboarding.md) ·
+> [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md) ·
 > [Cleanup](agentcore-cleanup.md)
 
 Publish the **`econresearch`** agent to the catalog and deploy it to the `agentcore` Runtime you
 registered in Part 1. Agentregistry clones the agent source from GitHub, builds the
 AgentCore-compatible image, hands it to AgentCore, and you watch the Deployment go from
 `deploying` to `deployed`. Then chat with the agent from the registry UI, tail its CloudWatch
-logs, and deploy the other three vertical agents from Part 2 the same way.
+logs, and deploy two more of the vertical agents from Part 2 the same way. The fourth,
+`ithelpdesk`, deliberately waits for [Part 4](agentcore-04-approval-onboarding.md), where it's
+onboarded through the registry's approval queue.
 
 > **Cost note:** this lab creates real AWS resources (an AgentCore runtime, an ECR/S3-backed
 > image build, CloudWatch logs) and invokes a Bedrock model. Costs are small but non-zero; see
@@ -21,7 +24,7 @@ logs, and deploy the other three vertical agents from Part 2 the same way.
 
 - Publish the `econresearch` Agent to the catalog and deploy it to AgentCore
 - Chat with the deployed agent in the registry UI and locate its CloudWatch log group
-- Deploy the three other example agents (`claimsupport`, `bankingsupport`, `ithelpdesk`)
+- Deploy two more example agents (`claimsupport`, `bankingsupport`)
 
 ## Pre-requisites
 
@@ -59,8 +62,9 @@ arctl get agents
 ```
 
 Published agents also appear in the UI's **Catalog** view
-(`http://${AR_IP}:12121/are/catalog`). Shown here with all four agents from this lab published
-(the other three come in section 4):
+(`http://${AR_IP}:12121/are/catalog`). Shown here with all four workshop agents published
+(`claimsupport` and `bankingsupport` come in section 4; `ithelpdesk` arrives in
+[Part 4](agentcore-04-approval-onboarding.md) via the approval queue):
 
 ![Catalog view showing the four published agents at tag 1.0.0](../../assets/screenshots/21-are-ui-catalog-agents.png)
 
@@ -137,7 +141,7 @@ aws logs tail "/aws/bedrock-agentcore/runtimes/<runtime-id>-DEFAULT" \
 
 ## 4. Deploy More Example Agents (optional)
 
-The catalog has three more vertical-use-case example agents built the same way as
+The catalog has two more vertical-use-case example agents built the same way as
 `econresearch`: same ADK/Bedrock scaffold ([Part 2](agentcore-02-create-agents.md) walks through
 them), same `agentcore` Runtime from Part 1, and no new AWS setup required:
 
@@ -145,7 +149,6 @@ them), same `agentcore` Runtime from Part 1, and no new AWS setup required:
 |---|---|---|
 | [`claimsupport`](../../assets/agents/claimsupport/) | Insurance claim support | `get_claim_status`, `get_policy_coverage` |
 | [`bankingsupport`](../../assets/agents/bankingsupport/) | Personal banking support | `get_account_summary`, `list_recent_transactions` |
-| [`ithelpdesk`](../../assets/agents/ithelpdesk/) | Internal IT helpdesk | `get_ticket_status`, `search_kb_articles` |
 
 Publish and deploy each one the same way you did `econresearch` in sections 1-2:
 
@@ -188,30 +191,12 @@ spec:
     workdir: assets/agents/bankingsupport
 EOF
 
-arctl apply -f assets/agents/ithelpdesk/agent.yaml
-arctl apply -f - <<EOF
-apiVersion: ar.dev/v1alpha1
-kind: Deployment
-metadata:
-  name: ithelpdesk
-spec:
-  targetRef:
-    kind: Agent
-    name: ithelpdesk
-    tag: "1.0.0"
-  runtimeRef:
-    kind: Runtime
-    name: agentcore
-  runtimeConfig:
-    region: ${AWS_REGION}
-    workdir: assets/agents/ithelpdesk
-EOF
-
 arctl get deployments
 ```
 
 Each deploys independently (its own clone, image build, and AgentCore rollout) and shows up
-alongside `econresearch` in `arctl get deployments`:
+alongside `econresearch` in `arctl get deployments` (the screenshot shows all four workshop
+agents; `ithelpdesk` joins after [Part 4](agentcore-04-approval-onboarding.md)):
 
 ![Instances view showing all four AgentCore agents deployed](../../assets/screenshots/16-are-ui-agentcore-instances.png)
 
@@ -225,11 +210,6 @@ Chat with each from the **Instances** view (`http://${AR_IP}:12121/are/instances
 - `bankingsupport`: "What's the balance on ACC-100234 and what were the last few transactions?"
 
   ![bankingsupport chat: account balance and recent transactions](../../assets/screenshots/18-agentcore-bankingsupport-chat.png)
-
-- `ithelpdesk`: "What's the status of ticket INC-40126, and is there a KB article about VPN
-  access?"
-
-  ![ithelpdesk chat: ticket status correlated with a matching KB article](../../assets/screenshots/19-agentcore-ithelpdesk-chat.png)
 
 ## Troubleshooting
 
@@ -251,7 +231,10 @@ can't outlive the Runtime it targets.
 
 ## Next
 
-- [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md) does exactly
+- [Part 4: Approval-Gated Agent Onboarding](agentcore-04-approval-onboarding.md) onboards the
+  fourth vertical agent, `ithelpdesk`, the governed way: submitted by a non-admin, staged
+  behind admin approval — and blocked from deploying until approved.
+- [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md) does exactly
   what this agent teases: live FRED data via `spec.mcpServers` through Agentgateway — plus the
   LLM traffic routed through the same gateway.
 - Govern who can see and submit the new assets: [AccessPolicy / RBAC](../access-control/access-policies.md)

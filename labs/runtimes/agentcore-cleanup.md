@@ -4,19 +4,20 @@
 > [Part 1: Integrate Agentregistry and AgentCore](agentcore-01-integration.md) ·
 > [Part 2: Create Agents](agentcore-02-create-agents.md) ·
 > [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md) ·
-> [Part 4: LLM and MCP Through Agentgateway](agentcore-04-agentgateway-llm-mcp.md) ·
+> [Part 4: Approval-Gated Agent Onboarding](agentcore-04-approval-onboarding.md) ·
+> [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md) ·
 > **Cleanup** (this doc)
 
 Every teardown step for the series, in one place. Run the sections below **top to bottom**, and
 skip any section for a part you never did.
 
-> **Order matters.** Deployments and catalog entries (Parts 3 and 4) must go before the Runtime
+> **Order matters.** Deployments and catalog entries (Parts 3–5) must go before the Runtime
 > and AWS integration they depend on (Part 1) — a `Deployment` can't be deleted cleanly once its
-> `Runtime` is gone, and Part 1's cross-account role is what Parts 3 and 4's deploys assumed to
+> `Runtime` is gone, and Part 1's cross-account role is what Parts 3–5's deploys assumed to
 > exist. If you're only part-way through the series, just run the sections for the parts you
 > completed, in this order.
 
-## If you completed Part 4 (LLM and MCP Through Agentgateway)
+## If you completed Part 5 (Route LLM and Registry-Managed MCP Through Agentgateway)
 
 ```bash
 # Agent + its agent-facing FRED entry
@@ -44,6 +45,26 @@ kubectl delete secret fred-api-key -n mcp
 > The parent Gateway is shared with the MCP labs; remove it only if you're done with those (see
 > the [FRED MCP lab](../mcp/fred-mcp.md) cleanup).
 
+## If you completed Part 4 (Approval-Gated Agent Onboarding)
+
+```bash
+arctl delete deployment ithelpdesk
+arctl delete agent ithelpdesk --tag 1.0.0
+
+# safety net if you skipped the lab's "Restore Defaults" step
+arctl delete accesspolicy are-readers-agent-onboarding 2>/dev/null || true
+helm upgrade --install agentregistry-enterprise \
+  oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
+  --version 2026.6.2 \
+  --namespace agentregistry-system \
+  --reuse-values \
+  --set config.requireCreateApproval=false
+```
+
+> Like Part 3's runtimes, `ithelpdesk`'s CloudWatch log group
+> (`/aws/bedrock-agentcore/runtimes/<runtime-id>-DEFAULT`) is left behind; remove it with
+> `aws logs delete-log-group` if you want a fully clean account.
+
 ## If you completed Part 3 (Register and Deploy Agents to AgentCore)
 
 ```bash
@@ -53,8 +74,6 @@ arctl delete deployment claimsupport
 arctl delete agent claimsupport --tag 1.0.0
 arctl delete deployment bankingsupport
 arctl delete agent bankingsupport --tag 1.0.0
-arctl delete deployment ithelpdesk
-arctl delete agent ithelpdesk --tag 1.0.0
 ```
 
 > AgentCore also leaves behind each runtime's CloudWatch log group; remove them with

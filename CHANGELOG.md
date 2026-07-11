@@ -1,5 +1,12 @@
 # Changelog
 
+0.1.5 - (7-10-26)
+---
+- New lab `labs/runtimes/agentcore-04-approval-onboarding.md` — onboard `ithelpdesk` through `requireCreateApproval`: non-admin submit → staged → Deployment held at `ReferencePending` → approve (UI or curl) → the same Deployment self-heals to AgentCore; the series is now 5 parts
+- Moved all cleanup steps to `agentcore-cleanup.md`
+- Added e2e test for agentcore using `./e2e-test.sh agentcore` and `./e2e-test.sh agentcore-cleanup`
+
+
 0.1.4 - (7-10-26)
 ---
 - Add cleanup to `e2e-test.sh`
