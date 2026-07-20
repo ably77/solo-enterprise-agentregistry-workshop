@@ -1,5 +1,11 @@
 # Changelog
 
+0.1.6 - (7-20-26)
+---
+- Fix to `agentcore` module of the `./e2e-test.sh` - detect keycloak endpoint in realtime
+- Update version to `v2026.7.0`
+- Add audit logging lab `/labs/access-control/audit-logging.md`
+
 0.1.5 - (7-10-26)
 ---
 - New lab `labs/runtimes/agentcore-04-approval-onboarding.md` — onboard `ithelpdesk` through `requireCreateApproval`: non-admin submit → staged → Deployment held at `ReferencePending` → approve (UI or curl) → the same Deployment self-heals to AgentCore; the series is now 5 parts

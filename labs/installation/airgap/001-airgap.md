@@ -59,9 +59,9 @@ export BINARY_HOST=http://artifacts.internal.example.com
 export BINARY_BUCKET=agentregistry-enterprise
 
 # --- Pinned versions (match what you mirrored) ---
-export ARCTL_VERSION=v2026.6.2
-export ARE_VERSION=2026.6.2            # Agentregistry Enterprise chart + image
-export ENTERPRISE_AGW_VERSION=v2026.6.1
+export ARCTL_VERSION=v2026.7.0
+export ARE_VERSION=2026.7.0            # Agentregistry Enterprise chart + image
+export ENTERPRISE_AGW_VERSION=v2026.6.3
 
 # --- Optional: name of a pull Secret you created in each namespace ---
 # export IMAGE_PULL_SECRET=my-registry-secret
@@ -142,7 +142,7 @@ Expected (server is empty until step 4 — that's fine):
 ```json
 {
   "cli": {
-    "version": "v2026.6.2",
+    "version": "v2026.7.0",
     "git_commit": "...",
     "build_time": "..."
   }
@@ -409,7 +409,7 @@ echo "Agentregistry API + UI: ${ARCTL_API_BASE_URL}"
 
 Required for the MCP-through-gateway labs. A single top-level `image.registry` override covers the
 chart-managed images this workshop uses — the controller and the agentgateway proxy (provisioned when
-a Gateway is created). They inherit the registry and are pinned to the chart-version tag (`2026.6.1`),
+a Gateway is created). They inherit the registry and are pinned to the chart-version tag (`2026.6.3`),
 matching the mirrored tags in [`ably7-image-list.md`](ably7-image-list.md).
 
 > The chart can also auto-provision shared extensions (`ext-auth-service`, `rate-limiter`,
@@ -516,7 +516,7 @@ reports its own build metadata — currently `dev`/`unknown` — rather than the
 matters is that the `server` object is present, not the exact string.)
 
 ```json
-{ "cli": { "version": "v2026.6.2", ... }, "server": { "version": "dev", "git_commit": "unknown", ... } }
+{ "cli": { "version": "v2026.7.0", ... }, "server": { "version": "dev", "git_commit": "unknown", ... } }
 ```
 
 > **Confirm admin privileges.** Your `admin` user should be a superuser. The most reliable check is

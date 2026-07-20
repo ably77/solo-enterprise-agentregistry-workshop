@@ -266,7 +266,7 @@ section 1.1; this entry only names where agents should call.
 
 > **Why not `deploymentRefs`?** You might expect to link the agent deployment to
 > `fred-incluster-agw` via `spec.deploymentRefs` and let the registry resolve the gateway URL.
-> As of `v2026.6.2` the registry rejects that with `ErrMCPSetMismatch`: its set-equality
+> As of `v2026.7.0` the registry rejects that with `ErrMCPSetMismatch`: its set-equality
 > validation excludes *remote* MCPServers (like `fred-incluster-mcp`, registered by URL) from
 > the set `deploymentRefs` may wire, so the ref is treated as an extra. Until that's relaxed
 > upstream, the agent-facing catalog entry above is the working pattern; the trade-off is that
