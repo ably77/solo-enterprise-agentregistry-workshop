@@ -45,9 +45,9 @@
 set -uo pipefail
 
 # ---------- pinned versions --------------------------------------------------
-ARCTL_VERSION="${ARCTL_VERSION:-v2026.6.2}"
-ARE_HELM_VERSION="${ARE_HELM_VERSION:-2026.6.2}"
-AGW_VERSION="${AGW_VERSION:-v2026.6.1}"
+ARCTL_VERSION="${ARCTL_VERSION:-v2026.7.0}"
+ARE_HELM_VERSION="${ARE_HELM_VERSION:-2026.7.0}"
+AGW_VERSION="${AGW_VERSION:-v2026.6.3}"
 GW_API_VERSION="${GW_API_VERSION:-v1.5.0}"
 
 # ---------- config -----------------------------------------------------------
@@ -227,7 +227,7 @@ install_agentregistry() {
   step "helm install agentregistry-enterprise ${ARE_HELM_VERSION}"
   cat > /tmp/are-values.yaml <<EOF
 image:
-  tag: v2026.6.2
+  tag: v2026.7.0
 service:
   type: LoadBalancer
 oidc:
@@ -376,7 +376,7 @@ verify_baseline() {
   step "Server version populated"
   # The running pod image tag is the authoritative version signal. The server's
   # self-reported build metadata is informational only: published images don't
-  # always stamp it (e.g. the v2026.6.2 image reports "dev"/"unknown"), so
+  # always stamp it (e.g. the v2026.7.0 image reports "dev"/"unknown"), so
   # asserting on it produces false failures even when the correct image is live.
   local simg; simg=$(kubectl get deploy agentregistry-enterprise-server -n agentregistry-system \
     -o jsonpath='{.spec.template.spec.containers[*].image}' 2>/dev/null)

@@ -83,6 +83,7 @@ A five-part **AWS Bedrock AgentCore** series (requires an AWS account you can ad
 - [Overview — What the Registry Governs](labs/access-control/README.md) — the governance surface (RBAC, approvals, identity) and where the Registry's scope ends and model/AI governance begins
 - [AccessPolicy / RBAC](labs/access-control/access-policies.md) — grant a non-admin group catalog read access; prove it with the `reader` user
 - [Approval Workflows](labs/access-control/approval-workflows.md) — gate every catalog submission behind admin approval (`requireCreateApproval`)
+- [Audit Logging](labs/access-control/audit-logging.md) — enable control-plane audit export and read a `lifecycle` event from a local debug collector (simple, no-SIEM case)
 
 ---
 
@@ -130,7 +131,8 @@ fe-enterprise-agentregistry-workshop/
 │   │   └── agentcore-cleanup.md          # consolidated teardown for all five parts
 │   └── access-control/
 │       ├── access-policies.md
-│       └── approval-workflows.md
+│       ├── approval-workflows.md
+│       └── audit-logging.md
 ├── assets/
 │   ├── keycloak/                        # kustomize stack: deployment + agentregistry-enterprise.json (--import-realm)
 │   ├── prompts/                         # Prompt manifest
@@ -174,7 +176,7 @@ Operator AWS credentials never go in `./secrets` — keep them ambient (`aws con
 
 ## Validated On
 
-- Agentregistry Enterprise + `arctl` `v2026.6.2`
-- Enterprise Agentgateway `v2026.6.1`
+- Agentregistry Enterprise + `arctl` `v2026.7.0`
+- Enterprise Agentgateway `v2026.6.3`
 - Keycloak `quay.io/keycloak/keycloak:26.0`
 - Kubernetes 1.29+

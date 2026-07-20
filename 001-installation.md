@@ -58,7 +58,7 @@ If `EXTERNAL-IP` stays `<pending>`, install/fix your LoadBalancer provider befor
 ## 2. Install the `arctl` CLI
 
 ```bash
-export ARCTL_VERSION=v2026.6.2
+export ARCTL_VERSION=v2026.7.0
 curl -sSL https://storage.googleapis.com/agentregistry-enterprise/install.sh \
   | ARCTL_VERSION=$ARCTL_VERSION sh
 export PATH=$HOME/.arctl/bin:$PATH
@@ -76,7 +76,7 @@ Expected (server is empty until step 4 - that's fine):
 ```json
 {
   "cli": {
-    "version": "v2026.6.2",
+    "version": "v2026.7.0",
     "git_commit": "...",
     "build_time": "..."
   }
@@ -196,7 +196,7 @@ group **name** in the `groups` claim (Keycloak emits names, not GUIDs).
 ```bash
 cat > /tmp/are-values.yaml <<EOF
 image:
-  tag: v2026.6.2
+  tag: v2026.7.0
 service:
   type: LoadBalancer
 oidc:
@@ -223,7 +223,7 @@ EOF
 
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.6.2 \
+  --version 2026.7.0 \
   --namespace agentregistry-system \
   -f /tmp/are-values.yaml \
   --wait --timeout 5m
@@ -283,13 +283,13 @@ kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/downloa
 # Agentgateway CRDs
 helm upgrade --install agentgateway-crds \
   oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway-crds \
-  --version v2026.6.1 \
+  --version v2026.6.3 \
   --namespace agentgateway-system --create-namespace
 
 # Agentgateway controller
 helm upgrade --install enterprise-agentgateway \
   oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway \
-  --version v2026.6.1 \
+  --version v2026.6.3 \
   --namespace agentgateway-system \
   --set-string licensing.licenseKey="${SOLO_TRIAL_LICENSE_KEY}"
 ```
@@ -357,7 +357,7 @@ arctl version --json
 ```
 
 ```json
-{ "cli": { "version": "v2026.6.2", ... }, "server": { "version": "v2026.6.2", ... } }
+{ "cli": { "version": "v2026.7.0", ... }, "server": { "version": "v2026.7.0", ... } }
 ```
 
 > **Confirm admin privileges.** Your `admin` user should be a superuser. The most reliable check is

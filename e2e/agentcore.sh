@@ -206,7 +206,7 @@ agentcore_integration() {
         fail "arctl runtime setup produced no CloudFormation template ($(head -1 /tmp/agentcore-rtsetup.err 2>/dev/null))"
         return 1
       fi
-      # v2026.6.2 trusts the account root gated by ExternalId (covers any
+      # v2026.7.0 trusts the account root gated by ExternalId (covers any
       # principal); older/newer shapes naming the literal default user get the
       # lab's sed patch so AssumeRole trusts our prefixed deployer
       if grep -qE 'arn:aws:iam::[0-9]+:root' /tmp/agentregistry-cf.yaml; then

@@ -335,7 +335,7 @@ Add the AWS settings to the registry install (all baseline values are preserved 
 ```bash
 helm upgrade agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.6.2 \
+  --version 2026.7.0 \
   --namespace agentregistry-system \
   --reuse-values \
   --set aws.enabled=true \
@@ -413,7 +413,7 @@ Condition:
     sts:ExternalId: "<generated-external-id>"
 ```
 
-> **Verify the trust policy covers your deployer before applying.** As of `arctl v2026.6.2`, the
+> **Verify the trust policy covers your deployer before applying.** As of `arctl v2026.7.0`, the
 > generated template trusts the **AWS account root** (`Principal.AWS: arn:aws:iam::<account>:root`)
 > gated by the `ExternalId` condition, not a specific IAM user — so it already covers
 > `${AR_DEPLOYER_USER}` (or any other principal in the account) with no patching needed. Confirm

@@ -27,7 +27,7 @@
 #
 # UPDATE TO LATEST
 #   Bump the version variables below (or pass them as env), then re-run:
-#     ARE_VERSION=2026.7.0 AGW_VERSION=v2026.7.0 ./mirror-images.sh
+#     ARE_VERSION=2026.7.0 AGW_VERSION=v2026.6.3 ./mirror-images.sh
 #   Run with --print-latest-arctl to see the newest published arctl version.
 #
 # USAGE
@@ -43,8 +43,8 @@ set -euo pipefail
 
 # ---- Configuration (override via env) ---------------------------------------
 DEST_REGISTRY="${DEST_REGISTRY:-docker.io/ably7}"
-ARE_VERSION="${ARE_VERSION:-2026.6.2}"          # Agentregistry Enterprise chart version
-AGW_VERSION="${AGW_VERSION:-v2026.6.1}"         # Enterprise Agentgateway chart version
+ARE_VERSION="${ARE_VERSION:-2026.7.0}"          # Agentregistry Enterprise chart version
+AGW_VERSION="${AGW_VERSION:-v2026.6.3}"         # Enterprise Agentgateway chart version
 KEYCLOAK_VERSION="${KEYCLOAK_VERSION:-26.0}"
 
 # Public source registries / chart locations

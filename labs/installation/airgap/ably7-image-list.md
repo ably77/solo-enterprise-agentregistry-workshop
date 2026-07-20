@@ -14,10 +14,10 @@ Not container images — mirror the bucket layout `<host>/<bucket>/<version>/<na
 artifact host (the lab uses `http://artifacts.internal.example.com` as a stand-in):
 
 ```
-http://artifacts.internal.example.com/agentregistry-enterprise/v2026.6.2/arctl-linux-amd64   (+ .sha256)
-http://artifacts.internal.example.com/agentregistry-enterprise/v2026.6.2/agw-sync
-http://artifacts.internal.example.com/agentregistry-enterprise/v2026.6.2/agentgateway
-http://artifacts.internal.example.com/agentregistry-enterprise/v2026.6.2/agentregistry-sts
+http://artifacts.internal.example.com/agentregistry-enterprise/v2026.7.0/arctl-linux-amd64   (+ .sha256)
+http://artifacts.internal.example.com/agentregistry-enterprise/v2026.7.0/agw-sync
+http://artifacts.internal.example.com/agentregistry-enterprise/v2026.7.0/agentgateway
+http://artifacts.internal.example.com/agentregistry-enterprise/v2026.7.0/agentregistry-sts
 ```
 
 ## Helm charts (OCI)
@@ -26,9 +26,9 @@ Docker Hub uses a flat `namespace/repo` layout, so charts mirror to top-level re
 `/charts/` path segment):
 
 ```
-oci://docker.io/ably7/agentregistry-enterprise:2026.6.2
-oci://docker.io/ably7/enterprise-agentgateway-crds:v2026.6.1
-oci://docker.io/ably7/enterprise-agentgateway:v2026.6.1
+oci://docker.io/ably7/agentregistry-enterprise:2026.7.0
+oci://docker.io/ably7/enterprise-agentgateway-crds:v2026.6.3
+oci://docker.io/ably7/enterprise-agentgateway:v2026.6.3
 ```
 
 ## OIDC — Keycloak
@@ -37,11 +37,11 @@ oci://docker.io/ably7/enterprise-agentgateway:v2026.6.1
 docker.io/ably7/keycloak:26.0
 ```
 
-## Agentregistry Enterprise (2026.6.2)
+## Agentregistry Enterprise (2026.7.0)
 
 ### server
 ```
-docker.io/ably7/server:v2026.6.2
+docker.io/ably7/server:v2026.7.0
 ```
 
 ### bundled PostgreSQL
@@ -59,16 +59,16 @@ docker.io/ably7/clickhouse-server:26.2.5-alpine
 docker.io/ably7/opentelemetry-collector-contrib:0.148.0
 ```
 
-## Enterprise Agentgateway (v2026.6.1)
+## Enterprise Agentgateway (v2026.6.3)
 
 ### controller
 ```
-docker.io/ably7/enterprise-agentgateway-controller:2026.6.1
+docker.io/ably7/enterprise-agentgateway-controller:2026.6.3
 ```
 
 ### agentgateway proxy
 ```
-docker.io/ably7/agentgateway-enterprise:2026.6.1
+docker.io/ably7/agentgateway-enterprise:2026.6.3
 ```
 
 > Shared extensions (`ext-auth-service`, `rate-limiter`, `redis`) are not enabled by this workshop, so

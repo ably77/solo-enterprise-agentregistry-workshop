@@ -1,8 +1,10 @@
 # Changelog
 
-0.1.6 - (7-13-26)
+0.1.6 - (7-20-26)
 ---
 - Fix to `agentcore` module of the `./e2e-test.sh` - detect keycloak endpoint in realtime
+- Update version to `v2026.7.0`
+- Add audit logging lab `/labs/access-control/audit-logging.md`
 
 0.1.5 - (7-10-26)
 ---

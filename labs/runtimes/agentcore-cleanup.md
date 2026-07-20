@@ -55,7 +55,7 @@ arctl delete agent ithelpdesk --tag 1.0.0
 arctl delete accesspolicy are-readers-agent-onboarding 2>/dev/null || true
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.6.2 \
+  --version 2026.7.0 \
   --namespace agentregistry-system \
   --reuse-values \
   --set config.requireCreateApproval=false
@@ -130,7 +130,7 @@ aws iam delete-policy \
 # if /tmp/are-values.yaml is gone, recreate it from 001 step 4 first)
 helm upgrade agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.6.2 \
+  --version 2026.7.0 \
   --namespace agentregistry-system \
   -f /tmp/are-values.yaml \
   --wait --timeout 5m

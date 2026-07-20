@@ -33,6 +33,9 @@ prove hands-on:
 6. **Versioned assets** — skills and prompts are published as versioned, pullable catalog assets, so
    a consumer uses an explicit, approved version rather than an arbitrary snapshot.
    *(Built in the Catalog labs.)*
+7. **Audit trail** — every lifecycle change, approval decision, and authorization check is exported
+   as a structured event, so "who's allowed" is backed by an evidence record of "who actually did
+   what." → [Audit Logging](audit-logging.md)
 
 ## Labs in this section
 
@@ -40,5 +43,7 @@ prove hands-on:
   with the `reader` user, and see why the principal must be the Keycloak group **name**, not its GUID
 - [Approval Workflows](approval-workflows.md) — gate every catalog submission behind admin approval
   (`requireCreateApproval`) and approve/reject via the UI, `/v0/approve` API, or a custom integration
+- [Audit Logging](audit-logging.md) — turn on control-plane audit export, then trigger and read a
+  `lifecycle` event from a local debug collector (the simple, no-SIEM case)
 
 > Start with **AccessPolicy** — approval workflows build directly on it.
