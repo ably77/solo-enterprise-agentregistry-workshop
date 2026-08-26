@@ -1,6 +1,6 @@
 # Ably7 Mirrored Image List
 
-The [canonical image list](../image-list.md) mirrored to `docker.io/ably7` — a **public Docker Hub repo
+The [canonical image list](../image-list.md) mirrored to `docker.io/ably7`, a **public Docker Hub repo
 that really hosts these images** (populated by [`mirror-images.sh`](../mirror-images.sh)), standing in
 for the private registry you'd use in a real air-gap. Swap `ably7` for your own. These are the exact
 references the [air-gap install lab](001-airgap.md) pulls.
@@ -10,7 +10,7 @@ references the [air-gap install lab](001-airgap.md) pulls.
 
 ## CLI + backend binaries (internal artifact host)
 
-Not container images — mirror the bucket layout `<host>/<bucket>/<version>/<name>` to your internal
+Not container images: mirror the bucket layout `<host>/<bucket>/<version>/<name>` to your internal
 artifact host (the lab uses `http://artifacts.internal.example.com` as a stand-in):
 
 ```
@@ -31,7 +31,7 @@ oci://docker.io/ably7/enterprise-agentgateway-crds:v2026.6.3
 oci://docker.io/ably7/enterprise-agentgateway:v2026.6.3
 ```
 
-## OIDC — Keycloak
+## OIDC: Keycloak
 
 ```
 docker.io/ably7/keycloak:26.0
@@ -72,4 +72,4 @@ docker.io/ably7/agentgateway-enterprise:2026.6.3
 ```
 
 > Shared extensions (`ext-auth-service`, `rate-limiter`, `redis`) are not enabled by this workshop, so
-> they aren't mirrored here. Enable them on a Gateway? Add them to `mirror-images.sh` and re-run.
+> they aren't mirrored here. If you enable them on a Gateway, add them to `mirror-images.sh` and re-run.

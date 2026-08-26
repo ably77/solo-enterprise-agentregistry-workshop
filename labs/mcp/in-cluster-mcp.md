@@ -5,12 +5,12 @@ already run somewhere on the public internet. This lab covers the other common c
 MCP server yourself** as an ordinary Kubernetes `Deployment` + `Service`, then register its
 **in-cluster Service URL** in the Agentregistry catalog and expose it through Agentgateway.
 
-We use a real, public MCP image — an **arXiv** academic-paper search server — but the pattern is
+We use a real, public MCP image (an **arXiv** academic-paper search server), but the pattern is
 identical for any MCP server image you build and host yourself.
 
 The only thing that changes from the remote labs is the catalog entry's `remote.url`: instead of
 `https://search.solo.io/mcp`, it points at `http://mcp-airxiv.mcp.svc.cluster.local:80/mcp`.
-Everything downstream — Virtual runtime, generated child route + backend, gateway endpoint — is the
+Everything downstream (Virtual runtime, generated child route + backend, gateway endpoint) is the
 same.
 
 ## Lab Objectives

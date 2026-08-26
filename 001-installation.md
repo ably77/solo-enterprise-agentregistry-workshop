@@ -40,7 +40,7 @@ ClickHouse both request PVs. If none is default:
 kubectl annotate storageclass <name> storageclass.kubernetes.io/is-default-class=true
 ```
 
-**Confirm a `LoadBalancer` Service can actually get an external address.** OIDC redirects and the
+**Confirm a `LoadBalancer` Service can get an external address.** OIDC redirects and the
 `arctl`/UI endpoints all depend on this, so test it now rather than discovering it later:
 
 ```bash
@@ -330,7 +330,7 @@ Waiting for authentication...
 Open that URL in a browser, enter the code, sign in as **`admin` / `admin`**, and approve. The CLI
 prints `token stored in keychain successfully`.
 
-The browser walks you through three screens — sign in, grant access to the `are-cli` client, then a
+The browser walks you through three screens: sign in, grant access to the `are-cli` client, then a
 success page you can close:
 
 | 1. Sign in (`admin` / `admin`) | 2. Grant access | 3. Success |

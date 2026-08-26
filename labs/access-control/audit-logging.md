@@ -1,4 +1,4 @@
-# Audit Logging — Who Did What in the Registry
+# Audit Logging: Who Did What in the Registry
 
 RBAC and approval workflows decide **who is allowed** to act on catalog assets. Audit logging is
 the matching evidence layer: a structured, tamper-evident record of **who did what**. It covers
@@ -19,7 +19,7 @@ required. A pointer to the production setup is at the end.
 
 ## Pre-requisites
 
-- [001 — Installation](../../001-installation.md) complete.
+- [001 - Installation](../../001-installation.md) complete.
 - Logged in as the `admin` (superuser), since enabling audit is a Helm/cluster operation.
 - Shell context:
 
@@ -273,5 +273,5 @@ in the docs.
 
 ## Next
 
-- [Approval Workflows](approval-workflows.md) — gate submissions behind admin approval (each
+- [Approval Workflows](approval-workflows.md): gate submissions behind admin approval (each
   approve/reject you make here shows up as an `approval` audit event)

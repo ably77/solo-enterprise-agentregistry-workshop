@@ -1,13 +1,13 @@
 # Install Enterprise Agentregistry (Air-Gap / Private Registry)
 
 This is the air-gapped twin of [`001-installation.md`](../../../001-installation.md). It takes you from a
-bare Kubernetes cluster to the same working **Solo.io Enterprise Agentregistry** baseline — the
+bare Kubernetes cluster to the same working **Solo.io Enterprise Agentregistry** baseline (the
 `arctl` CLI, an in-cluster OIDC provider (Keycloak), the Agentregistry control plane + catalog, and
-Enterprise Agentgateway — but with **every image and binary pulled from a private registry / internal
+Enterprise Agentgateway), but with **every image and binary pulled from a private registry / internal
 artifact host** instead of the public Solo, Docker Hub, Quay, and `storage.googleapis.com` endpoints.
 
 > [!IMPORTANT]
-> **Air-gap has two mirror surfaces, on two different hosts.** This lab fills both with stand-ins —
+> **Air-gap has two mirror surfaces, on two different hosts.** This lab fills both with stand-ins;
 > swap each for your own to reproduce a true air-gap. Full artifact list:
 > [canonical image list](../image-list.md) · [mirrored-tag view](ably7-image-list.md).
 >
@@ -17,12 +17,12 @@ artifact host** instead of the public Solo, Docker Hub, Quay, and `storage.googl
 > | **CLI + backend binaries** | `arctl`, and the `agw-sync` / `agentgateway` / `agentregistry-sts` the server downloads at runtime | `http://artifacts.internal.example.com` → an **HTTP/object host you provide** (NOT the container registry) | `mirror-images.sh --binaries-dir DIR` downloads them; you upload `DIR` |
 >
 > **Why two hosts:** binaries are plain HTTP-served files, and a container registry (Docker Hub
-> included) only serves OCI artifacts — they can't live next to the images. The server fetches them at
+> included) only serves OCI artifacts, so they can't live next to the images. The server fetches them at
 > runtime via `global.binaryHost`; if it's unreachable the server pod starts but its managed gateway
 > backends never come up.
 >
 > **What you must do:** point `BINARY_HOST` (below) at your host. On a **connected** cluster you may
-> instead leave `BINARY_HOST=https://storage.googleapis.com` — then the binaries are the single
+> instead leave `BINARY_HOST=https://storage.googleapis.com`; then the binaries are the single
 > remaining outbound dependency (images + charts still come from your registry). A true air-gap
 > requires your own host.
 
@@ -39,7 +39,7 @@ artifact host** instead of the public Solo, Docker Hub, Quay, and `storage.googl
 
 - A running Kubernetes cluster (≥ 1.29) with a default `StorageClass` and a `LoadBalancer`-capable Service controller (managed clusters: yes; bare-metal: MetalLB/kube-vip; `kind`: `cloud-provider-kind`)
 - `kubectl`, `helm` v3, `openssl`, `envsubst`, `jq`
-- A **Solo trial license key**. Get one free at [solo.io](https://www.solo.io/) or from your Solo account team. Export it as `SOLO_TRIAL_LICENSE_KEY` — the same trial key works for Enterprise Agentgateway.
+- A **Solo trial license key**. Get one free at [solo.io](https://www.solo.io/) or from your Solo account team. Export it as `SOLO_TRIAL_LICENSE_KEY`; the same trial key works for Enterprise Agentgateway.
 - A **private container registry** reachable from the cluster, pre-loaded with the [image list](../image-list.md), and an **internal artifact host** serving the `arctl` CLI and backend binaries.
 
 ### Configure air-gap variables
@@ -82,24 +82,24 @@ export ENTERPRISE_AGW_VERSION=v2026.6.3
 
 ## 1. Confirm the Cluster
 
-Same as the connected install — no images pulled yet.
+Same as the connected install; no images pulled yet.
 
 ```bash
 kubectl get nodes
 kubectl get storageclass
 ```
 
-You need at least one `StorageClass` marked `(default)` — Agentregistry's bundled PostgreSQL and
+You need at least one `StorageClass` marked `(default)`: Agentregistry's bundled PostgreSQL and
 ClickHouse both request PVs. If none is default:
 
 ```bash
 kubectl annotate storageclass <name> storageclass.kubernetes.io/is-default-class=true
 ```
 
-**Confirm a `LoadBalancer` Service can actually get an external address.** OIDC redirects and the
+**Confirm a `LoadBalancer` Service can get an external address.** OIDC redirects and the
 `arctl`/UI endpoints all depend on this, so test it now rather than discovering it later. The LB
 controller assigns an external IP independently of any backing pods, so a bare `LoadBalancer`
-Service is enough — no image pull, nothing to mirror:
+Service is enough: no image pull, nothing to mirror.
 
 ```bash
 kubectl create service loadbalancer lb-smoke --tcp=80:80
@@ -116,7 +116,7 @@ If `EXTERNAL-IP` stays `<pending>`, install/fix your LoadBalancer provider befor
 
 The public installer (`curl … storage.googleapis.com/agentregistry-enterprise/install.sh | sh`) reaches
 the internet at runtime, so it won't work in an air-gap. Instead, download the mirrored binary
-directly. The CLI lives at `<host>/<bucket>/<version>/arctl-<os>-<arch>` (with a `.sha256` sibling) —
+directly. The CLI lives at `<host>/<bucket>/<version>/arctl-<os>-<arch>` (with a `.sha256` sibling),
 the same layout the public installer uses, so mirroring the bucket path 1:1 is all you need.
 
 ```bash
@@ -137,7 +137,7 @@ Verify:
 arctl version --json
 ```
 
-Expected (server is empty until step 4 — that's fine):
+Expected (server is empty until step 4; that's fine):
 
 ```json
 {
@@ -153,14 +153,14 @@ Expected (server is empty until step 4 — that's fine):
 
 ## 3. Stand Up Keycloak (OIDC) from a mirrored image
 
-The realm is **fully declarative** — see [`assets/keycloak/agentregistry-enterprise.json`](../../../assets/keycloak/agentregistry-enterprise.json),
+The realm is **fully declarative**: see [`assets/keycloak/agentregistry-enterprise.json`](../../../assets/keycloak/agentregistry-enterprise.json),
 which defines the `agentregistry-enterprise` realm, three groups (`are-admins` / `are-readers` /
 `are-writers`), three users (`admin` / `reader` / `writer`, password = username), the two OIDC clients
 (`are-backend` confidential, `are-cli` public + device-code), and the `groups` claim mapper on **both**
 clients. Keycloak imports it on first boot (`--import-realm`).
 
 The base stack ([`assets/keycloak/`](../../../assets/keycloak/)) pins `quay.io/keycloak/keycloak:26.0`.
-Rather than editing that base in place — it's shared with the connected install and `e2e-test.sh` —
+Rather than editing that base in place (it's shared with the connected install and `e2e-test.sh`),
 apply the **air-gap overlay** at [`assets/keycloak-airgap/`](../../../assets/keycloak-airgap/), which
 pulls in the whole base unchanged and only rewrites the Keycloak image to your private registry:
 
@@ -258,10 +258,10 @@ Expected (the claim is the plain group **name**, no `/` prefix):
 
 This is the step that differs most from the connected install. Two override surfaces:
 
-1. **Container images** — the server, the bundled PostgreSQL, ClickHouse, and the OpenTelemetry
+1. **Container images**: the server, the bundled PostgreSQL, ClickHouse, and the OpenTelemetry
    collector. Each takes a `registry`/`repository`/`name`/`tag` (ClickHouse embeds the registry in
    `repository`).
-2. **Backend binaries** — the server downloads `agw-sync`, `agentgateway`, and `agentregistry-sts` at
+2. **Backend binaries**: the server downloads `agw-sync`, `agentgateway`, and `agentregistry-sts` at
    runtime from `<global.binaryHost>/<global.binaryBucket>/<version>/<name>`. Point `global.binaryHost`
    / `global.binaryBucket` at your internal artifact host or these never download and the managed
    gateway backends never start.
@@ -348,13 +348,13 @@ helm upgrade --install agentregistry-enterprise \
 
 > **Chart source:** the OCI chart itself
 > (`oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise`) must
-> also be mirrored — [`mirror-images.sh`](../mirror-images.sh) does this with `helm pull` + `helm push`.
+> also be mirrored; [`mirror-images.sh`](../mirror-images.sh) does this with `helm pull` + `helm push`.
 > Docker Hub uses a flat `namespace/repo` layout, so the chart lands at
 > `oci://${PRIVATE_REGISTRY}/agentregistry-enterprise` (no `/helm/` segment). A deeper-path registry
 > (Harbor/ECR/Artifactory/GAR) can keep the nested path. If you'd rather pull the chart from the public
 > URL and override only images, swap the `oci://...` line for the public URL and keep the values above.
 
-> **Backend binaries download lazily — you'll verify them in the first MCP lab.** The server pulls
+> **Backend binaries download lazily; you'll verify them in the first MCP lab.** The server pulls
 > `agw-sync` / `agentgateway` / `agentregistry-sts` from `$BINARY_HOST` only when it first provisions
 > a managed gateway backend, which doesn't happen at baseline. Unlike a missing image (which
 > `CrashLoopBackOff`s loudly), a missing binary lets the server pod run fine here and only surfaces
@@ -364,7 +364,7 @@ helm upgrade --install agentregistry-enterprise \
 
 > **Re-running against an existing install?** On a fresh cluster, skip this. If the registry is already
 > installed and you re-ran step 3 (so `BACKEND_CLIENT_SECRET`/`OIDC_ISSUER` changed), the running pod
-> still holds the old value in memory — a `Secret` change alone doesn't restart it. Force a rollout:
+> still holds the old value in memory; a `Secret` change alone doesn't restart it. Force a rollout:
 > ```bash
 > kubectl rollout restart deployment/agentregistry-enterprise-server -n agentregistry-system
 > kubectl rollout status  deployment/agentregistry-enterprise-server -n agentregistry-system
@@ -408,7 +408,7 @@ echo "Agentregistry API + UI: ${ARCTL_API_BASE_URL}"
 ## 5. Install Enterprise Agentgateway (single registry override)
 
 Required for the MCP-through-gateway labs. A single top-level `image.registry` override covers the
-chart-managed images this workshop uses — the controller and the agentgateway proxy (provisioned when
+chart-managed images this workshop uses: the controller and the agentgateway proxy (provisioned when
 a Gateway is created). They inherit the registry and are pinned to the chart-version tag (`2026.6.3`),
 matching the mirrored tags in [`ably7-image-list.md`](ably7-image-list.md).
 
@@ -426,7 +426,7 @@ helm upgrade --install agentgateway-crds \
   --version ${ENTERPRISE_AGW_VERSION} \
   --namespace agentgateway-system --create-namespace
 
-# Agentgateway controller — one image.registry override covers the controller and the proxy
+# Agentgateway controller: one image.registry override covers the controller and the proxy
 helm upgrade --install enterprise-agentgateway \
   oci://${PRIVATE_REGISTRY}/enterprise-agentgateway \
   --version ${ENTERPRISE_AGW_VERSION} \
@@ -483,7 +483,7 @@ Open that URL in a browser, enter the code, sign in as **`admin` / `admin`**, an
 prints `token stored in keychain successfully`.
 
 > **Headless / CI login (no browser):** `arctl` also supports the non-interactive
-> password-credentials flow against the same `are-cli` client — handy for automated validation:
+> password-credentials flow against the same `are-cli` client, handy for automated validation:
 > ```bash
 > arctl user login --oidc-issuer-url "${OIDC_ISSUER}" --oidc-client-id "${ARE_CLI_CLIENT_ID}" \
 >   --oidc-flow password-credentials --oidc-username admin --oidc-password admin
@@ -510,7 +510,7 @@ arctl version --json
 ```
 
 The `server` block now populates, which confirms `arctl` is talking to the registry. (The server
-reports its own build metadata — currently `dev`/`unknown` — rather than the chart version; what
+reports its own build metadata, currently `dev`/`unknown`, rather than the chart version; what
 matters is that the `server` object is present, not the exact string.)
 
 ```json

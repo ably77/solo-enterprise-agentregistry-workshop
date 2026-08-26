@@ -306,5 +306,5 @@ section also restores the flag and removes the AccessPolicy.
 
 - [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md) extends
   `econresearch` so its LLM and MCP traffic both route through Agentgateway.
-- [Approval Workflows](../access-control/approval-workflows.md) — the full approval-mechanics
+- [Approval Workflows](../access-control/approval-workflows.md): the full approval-mechanics
   lab this one builds on, including custom `/v0/approve` integrations.

@@ -232,14 +232,14 @@ credentials via `helm upgrade`.
    access keys. These keys are what the server pod actually holds (delivered as helm `aws.*`
    values). On their own they can do almost nothing privileged: the whole point of the base
    identity is to be a *starting principal* whose only real job is to call `sts:AssumeRole`.
-   Every fixed name this lab creates gets your `AR_USER_PREFIX` prepended — if you're in a
+   Every fixed name this lab creates gets your `AR_USER_PREFIX` prepended. In a
    personal AWS account this is cosmetic, but in a **shared account** (a team sandbox, say) it's
    what stops your setup and a teammate's from colliding on the same IAM user, policies, or
    CloudFormation stack.
 2. A **cross-account role** (Step 2) that carries the real AgentCore permissions. The server
    assumes this role at deploy time to get short-lived credentials.
 
-Why split them? Because the powerful permissions live on the role, not on the keys sitting in your
+The split keeps the powerful permissions on the role, not on the keys sitting in your
 cluster. The role can be revoked, rotated, or re-scoped independently of the pod's credentials,
 and its trust policy decides *who* may assume it. In a real enterprise the role commonly lives
 in a **different AWS account** (a workload account) from the deployer user (a shared platform
@@ -253,9 +253,9 @@ Create the IAM policies (checked in at `assets/runtimes/agentcore/`, sourced fro
 [docs quickstart](https://docs.solo.io/agentregistry/latest/quickstart/agentcore/), with your
 `AR_USER_PREFIX` on the name so they don't collide with a teammate's copy in a shared account):
 
-> **Why three policies, not two.** The quickstart's AgentCore permissions (bedrock-agentcore,
+> **Three policies because of AWS's policy size quota.** The quickstart's AgentCore permissions (bedrock-agentcore,
 > IAM PassRole, S3, ECR, KMS, Secrets Manager, plus the observability/evaluation statements AWS
-> added more recently — `ObservabilityReadOnlyPermissions`, `TransactionSearch*`,
+> added more recently: `ObservabilityReadOnlyPermissions`, `TransactionSearch*`,
 > `AgentCoreEvaluation*`) now add up to ~7.4 KB minified, over AWS's **6,144-character hard quota**
 > for a single customer-managed policy (`aws iam create-policy` fails with
 > `LimitExceeded: Cannot exceed quota for PolicySize: 6144`). There's no way to fit it in one
@@ -287,9 +287,9 @@ aws iam create-policy \
   exactly what's carved out, and a second statement adds back a small set of account/organization
   reads plus service-linked-role lifecycle calls
   (`iam:CreateServiceLinkedRole`/`iam:DeleteServiceLinkedRole`) and `iam:ListRoles` that the flow
-  genuinely needs.
+  needs.
 - **`AgentRegistryBedrockAgentCoreAccessPart1`/`Part2`** are the fine-grained half (split across
-  two policies purely to fit AWS's per-policy size quota — same permission set either way): the
+  two policies to fit AWS's per-policy size quota; same permission set either way): the
   full `bedrock-agentcore:*` runtime-management surface (create/update/delete runtimes), plus the
   scoped read paths AgentCore
   needs: KMS decrypt, S3 code-artifact buckets, CloudWatch Logs, ECR. The key line is
@@ -352,7 +352,7 @@ kubectl rollout status deployment/agentregistry-enterprise-server -n agentregist
 and layer only your `--set` overrides on top. Without it, the upgrade would reset everything you
 configured in 001 back to chart defaults. The chart renders the `aws.*` values into a Kubernetes
 `Secret` and injects them into the server pod's environment; the `--wait` plus `rollout status`
-force and confirm a fresh pod that actually picks up the new credentials (a running pod keeps its
+force and confirm a fresh pod that picks up the new credentials (a running pod keeps its
 old environment). If a pod ever predates the change, the Troubleshooting row below forces a restart.
 
 ## 2. Create the Cross-Account IAM Role
@@ -362,10 +362,10 @@ AgentCore, covering the Bedrock AgentCore APIs, IAM (per-agent execution roles),
 artifacts), and CloudWatch Logs. `--role-name` is the one piece of this `arctl` lets you
 parameterize, so give it a prefixed name too:
 
-> **`runtime setup` needs a bearer token — your device login is not enough.** Generating the
+> **`runtime setup` needs a bearer token; your device login is not enough.** Generating the
 > template is a registry API call, and unlike the other `arctl` commands in this series,
 > `arctl runtime setup` authenticates only through the `ARCTL_API_TOKEN` env var (or its
-> `--registry-token` flag) — it does **not** read the session your `arctl user login` stored. Run
+> `--registry-token` flag); it does **not** read the session your `arctl user login` stored. Run
 > it without a token and it fails with `API returned status 401: Unauthorized` (leaving
 > `/tmp/agentregistry-cf.yaml` empty). Mint an admin token first, using the values your shell
 > context already sourced:
@@ -376,7 +376,7 @@ parameterize, so give it a prefixed name too:
 >   -d username=admin -d password=admin -d "scope=openid profile" | jq -r .access_token)
 > ```
 >
-> The token expires after a few minutes — if a later run hits the 401 again, re-run this export.
+> The token expires after a few minutes; if a later run hits the 401 again, re-run this export.
 > Once the template is generated, `unset ARCTL_API_TOKEN` to let subsequent `arctl` commands go
 > back to your device-login session.
 
@@ -415,7 +415,7 @@ Condition:
 
 > **Verify the trust policy covers your deployer before applying.** The
 > generated template trusts the **AWS account root** (`Principal.AWS: arn:aws:iam::<account>:root`)
-> gated by the `ExternalId` condition, not a specific IAM user — so it already covers
+> gated by the `ExternalId` condition, not a specific IAM user, so it already covers
 > `${AR_DEPLOYER_USER}` (or any other principal in the account) with no patching needed. Confirm
 > that shape before applying:
 >
@@ -517,7 +517,7 @@ a live sync status. The Instances count fills in as you deploy agents in Part 3:
 ![Runtimes view showing the agentcore AgentCore connection synced in us-east-1](../../assets/screenshots/20-are-ui-runtimes.png)
 
 > **`apply` doesn't validate the credentials.** `roleArn` / `externalId` / `region` are stored as
-> config and only *used* lazily, at deploy time, when the registry actually attempts the
+> config and only *used* lazily, at deploy time, when the registry attempts the
 > `sts:AssumeRole`. So a wrong `externalId` or a mistyped ARN will `apply` cleanly here and only
 > surface later as a failed **Deployment** condition (see the "IAM role not assumable" row in
 > [Part 3's Troubleshooting](agentcore-03-deploy-agents.md#troubleshooting)), not as an error on
@@ -534,7 +534,7 @@ to carry over is `AWS_REGION`.
 |---|---|
 | `helm upgrade` succeeded but the server can't reach AWS | The server pod may predate the new `aws.*` values. `kubectl rollout restart deployment/agentregistry-enterprise-server -n agentregistry-system` and re-check. |
 | `create-stack` fails with `InsufficientCapabilitiesException` | You omitted `--capabilities CAPABILITY_NAMED_IAM`. Re-run the `create-stack` command from step 2 as written. |
-| `arctl runtime setup` fails with `API returned status 401: Unauthorized`, or `/tmp/agentregistry-cf.yaml` comes out empty | `runtime setup` authenticates only via `ARCTL_API_TOKEN` — it ignores your `arctl user login` session. Mint a token per the callout in step 2 and re-run. Note the token expires after a few minutes. |
+| `arctl runtime setup` fails with `API returned status 401: Unauthorized`, or `/tmp/agentregistry-cf.yaml` comes out empty | `runtime setup` authenticates only via `ARCTL_API_TOKEN`; it ignores your `arctl user login` session. Mint a token per the callout in step 2 and re-run. Note the token expires after a few minutes. |
 
 A wrong `externalId` or mistyped role ARN won't error in this lab at all; it surfaces as a failed
 Deployment condition in [Part 3](agentcore-03-deploy-agents.md#troubleshooting).
@@ -545,7 +545,7 @@ If you're continuing to [Part 2](agentcore-02-create-agents.md) or
 [Part 3](agentcore-03-deploy-agents.md), **skip this section**; everything this lab built is what
 those labs run on. When you're done with the whole series, tear it down with the
 ["If you completed Part 1"](agentcore-cleanup.md#if-you-completed-part-1-integrate-agentregistry-and-agentcore)
-section of the consolidated [Cleanup](agentcore-cleanup.md) guide — run it **last**, after any
+section of the consolidated [Cleanup](agentcore-cleanup.md) guide. Run it **last**, after any
 Parts 3–5 deployments are gone, since a Deployment can't outlive the Runtime it targets.
 
 ## Next

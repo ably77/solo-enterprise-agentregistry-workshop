@@ -12,7 +12,7 @@ Every teardown step for the series, in one place. Run the sections below **top t
 skip any section for a part you never did.
 
 > **Order matters.** Deployments and catalog entries (Parts 3–5) must go before the Runtime
-> and AWS integration they depend on (Part 1) — a `Deployment` can't be deleted cleanly once its
+> and AWS integration they depend on (Part 1): a `Deployment` can't be deleted cleanly once its
 > `Runtime` is gone, and Part 1's cross-account role is what Parts 3–5's deploys assumed to
 > exist. If you're only part-way through the series, just run the sections for the parts you
 > completed, in this order.
@@ -75,7 +75,7 @@ arctl delete agent claimsupport --tag 1.0.0
 arctl delete deployment bankingsupport
 arctl delete agent bankingsupport --tag 1.0.0
 
-# last — every Part 3-5 Deployment references this Model
+# last: every Part 3-5 Deployment references this Model
 arctl delete model default --tag latest
 ```
 
@@ -87,7 +87,7 @@ arctl delete model default --tag latest
 
 This tears down the AgentCore integration itself: the `agentcore` Runtime, the cross-account role
 stack, the deployer IAM user, and the `aws.*` helm values. Run it only once everything in the
-sections above (if applicable) is gone — a `Deployment` still targeting this Runtime will block or
+sections above (if applicable) is gone; a `Deployment` still targeting this Runtime will block or
 orphan when the Runtime disappears.
 
 > Running this in a fresh shell? Re-run [Part 1](agentcore-01-integration.md)'s Pre-requisites
@@ -150,7 +150,7 @@ unset AR_USER_PREFIX AR_DEPLOYER_USER AR_STACK_NAME AR_ROLE_NAME
 > so two people in the same AWS account get `alice-agentregistry-deployer` and
 > `bob-agentregistry-deployer` instead of colliding on one `agentregistry-deployer`. If the
 > account also carries **unprefixed** resources (e.g. from a teammate's setup outside this
-> workshop), they may be shared — before deleting anything named exactly
+> workshop), they may be shared. Before deleting anything named exactly
 > `agentregistry-deployer`, `AgentRegistryGeneralAccess`,
 `AgentRegistryBedrockAgentCoreAccess`/`Part1`/`Part2`, or
 > `agentregistry-access-role` (no prefix), confirm with whoever else might have a `Runtime`

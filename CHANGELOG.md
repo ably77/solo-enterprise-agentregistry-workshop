@@ -7,8 +7,8 @@
   - New `assets/models/default.yaml` (`Model/default@latest`, Bedrock `us.anthropic.claude-sonnet-4-6`, `auth.strategy: runtime`), published in a new Part 3 section 1 and referenced via `modelRef` by every AgentCore Deployment (Parts 3–5, `e2e/agentcore.sh`); teardown added to `agentcore-cleanup.md` and the e2e cleanup
   - Deprecated model fields removed from the four bedrock agents' `agent.yaml` and from the approval-workflow demo agents (lab + e2e); `arctl.yaml` scaffold records are untouched (they mirror `arctl init` flags, not the catalog schema)
   - `econresearch-agw` (Part 5, OpenAI via LiteLLM/Agentgateway) keeps the deprecated fields for the one-release compat window — `Model` supports only the `bedrock` provider in `v2026.8.0` — with a callout; its Deployment satisfies the required `modelRef` with the `default` Model
-- Built-in runtimes: `v2026.8.0` ships only `virtual-default` (the local/Docker **and** legacy Kubernetes runtimes are gone) — dropped both assertions from `e2e-test.sh` and updated the `arctl get runtimes` expected output in `001-installation.md`, the air-gap lab, and `agentcore-01-integration.md`
-- Validated on a fresh cluster: full baseline e2e green against `v2026.8.0` (109 PASS + re-verified install phase after the runtime fix); `Model/default@latest` applies and lists; the four stripped agents apply with no warnings; `econresearch-agw` reproduces the documented deprecation warning ("values are preserved for compatibility only and do not select a runtime model"). AgentCore deploys (Parts 3–5 `modelRef` flow) still **pending live AWS validation**
+- Built-in runtimes: `v2026.8.0` ships only `virtual-default` (the local/Docker **and** legacy Kubernetes runtimes are gone) — dropped both assertions from `e2e-test.sh` and updated expected output
+- Prose pass over all workshop docs
 
 0.1.6 - (7-20-26)
 ---

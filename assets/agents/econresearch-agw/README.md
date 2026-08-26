@@ -21,6 +21,6 @@ this folder is cloned from a shared Git URL, so the address can't be baked in).
 `mcp_tools.py` and `prompts_loader.py` are unmodified scaffold files.
 agentregistry clones this folder from GitHub when you deploy the agent to the
 AgentCore runtime. Note the AgentCore builder installs Python deps from
-`requirements.txt` (appending its own wrapper defaults) — it does not use the
+`requirements.txt` (appending its own wrapper defaults); it does not use the
 `Dockerfile` or `pyproject.toml`, which serve the kagent-image and local-run
 paths. That's why `litellm` is pinned in both files.

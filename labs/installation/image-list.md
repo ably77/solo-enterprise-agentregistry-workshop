@@ -12,15 +12,15 @@ companions for **Agentregistry Enterprise `v2026.8.0`** + **Enterprise Agentgate
 
 ## CLI + backend binaries (internal artifact host)
 
-The `arctl` CLI and the server's managed-backend binaries are **not** container images — they are
+The `arctl` CLI and the server's managed-backend binaries are **not** container images; they are
 downloaded over HTTP from `storage.googleapis.com`. A container registry (Docker Hub included) only
-serves OCI artifacts, so **these cannot be mirrored to your image registry** — you must host them on
+serves OCI artifacts, so **these cannot be mirrored to your image registry**: you must host them on
 your own HTTP/object server (S3/GCS bucket, Nginx, Artifactory, …) and set `global.binaryHost` /
 `global.binaryBucket` to it; paths resolve as `<host>/<bucket>/<version>/<name>`.
 
 > **What to do:** `./mirror-images.sh --binaries-dir ./binaries` downloads everything below into
 > `./binaries/<version>/`; upload that directory to your host. On a **connected** cluster you may skip
-> this and leave `global.binaryHost=https://storage.googleapis.com` — then these binaries are the only
+> this and leave `global.binaryHost=https://storage.googleapis.com`; then these binaries are the only
 > outbound dependency left after the images + charts are mirrored.
 
 ### `arctl` CLI
@@ -58,7 +58,7 @@ helm pull oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/ent
 
 ## Images
 
-### OIDC — Keycloak
+### OIDC: Keycloak
 
 ```bash
 quay.io/keycloak/keycloak:26.0

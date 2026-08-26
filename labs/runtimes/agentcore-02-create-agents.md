@@ -138,7 +138,7 @@ spec:
       subfolder: "assets/agents/econresearch"
 ```
 
-Notice there are **no model fields** on the Agent: model choice is a deploy-time decision — a
+Notice there are **no model fields** on the Agent: model choice is a deploy-time decision: a
 `kind: Model` catalog resource referenced by the Deployment's `spec.modelRef`
 ([Part 3 section 1](agentcore-03-deploy-agents.md) publishes the workshop's Bedrock Claude
 `Model`). The scaffold's model flags above still shape the generated *code*
@@ -181,7 +181,7 @@ entries and deploying, which is [Part 3](agentcore-03-deploy-agents.md).
   in the registry UI, and tail its CloudWatch logs, then do the same for `claimsupport` and
   `bankingsupport`.
 - [Part 4: Approval-Gated Agent Onboarding](agentcore-04-approval-onboarding.md): the fourth
-  agent, `ithelpdesk`, arrives through the governed path — staged by a non-admin submission,
+  agent, `ithelpdesk`, arrives through the governed path: staged by a non-admin submission,
   deploy blocked until an admin approves.
 - [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md): the same
   agent recipe with the Bedrock adapter swapped for an OpenAI model behind Agentgateway, and

@@ -1,4 +1,4 @@
-# Workshop default Model (Bedrock Claude) — referenced by every Deployment via spec.modelRef.
+# Workshop default Model (Bedrock Claude), referenced by every Deployment via spec.modelRef.
 apiVersion: ar.dev/v1alpha1
 kind: Model
 metadata:

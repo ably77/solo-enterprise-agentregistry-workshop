@@ -127,8 +127,7 @@ ARCTL_API_TOKEN=$(token_for reader) arctl get agent approval-test-agent --tag 1.
 
 ## 4. Approve the Pending Request
 
-Three ways to review and approve or reject a pending submission. All three operate
-on the same `/v0/approve` resource.
+The three methods below all operate on the same `/v0/approve` resource.
 
 ### Method 1 (recommended): AgentRegistry UI
 
@@ -169,8 +168,8 @@ curl -s -X POST \
 
 ### Method 3: integrate into your own UI
 
-`/v0/approve` isn't special-cased to the product UI. Any internal tool can call it
-directly: `GET /v0/approve` for the pending list, then `POST /v0/approve` with
+Any internal tool can call `/v0/approve` directly, the same way the product UI
+does: `GET /v0/approve` for the pending list, then `POST /v0/approve` with
 `{"action": "approve" | "reject", "items": [...]}` for the selected tuples.
 
 ## 5. Verify the Asset Is in the Catalog

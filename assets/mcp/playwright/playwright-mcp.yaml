@@ -1,7 +1,7 @@
 # Catalog entry for the Playwright browser-automation MCP server.
 #
 # Unlike demo-tools (which clones a Git repo via source.repository), Playwright
-# ships as a published npm package. So this is a PACKAGE-BASED stdio entry: the
+# ships as a published npm package, so this is a PACKAGE-BASED stdio entry: the
 # catalog records the npm package + version + stdio transport. The npm registry
 # is the distribution, not the agent registry + Git - so `arctl pull` does not
 # apply here (there is no repo to clone).

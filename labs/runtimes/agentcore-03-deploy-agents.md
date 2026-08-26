@@ -53,13 +53,13 @@ export AWS_REGION=us-east-1   # must match the region you used in Part 1
 
 Model choice lives in the catalog, not in each Agent: a `kind: Model` resource carries the
 provider, model id, auth strategy, and endpoint, and every Deployment picks one with
-`spec.modelRef` — **required** for AgentCore harness deployments like the ones in this lab.
+`spec.modelRef`, which is **required** for AgentCore harness deployments like the ones in this lab.
 
 Publish the workshop's Bedrock Claude model once; every deploy in Parts 3–4 references it:
 
 ```bash
 cat assets/models/default.yaml   # provider: bedrock, us.anthropic.claude-sonnet-4-6
-                                 # endpoint.region is us-east-1 — edit if your AWS_REGION differs
+                                 # endpoint.region is us-east-1; edit if your AWS_REGION differs
 arctl apply -f assets/models/default.yaml
 arctl get models
 ```
@@ -115,7 +115,7 @@ arctl get deployments
 arctl get deployment econresearch -o yaml
 ```
 
-The Deployment moves through `deploying` → `deployed`. Under the hood, that transition is several
+The Deployment moves through `deploying` → `deployed`. That transition covers several
 distinct phases: the registry (1) assumes the cross-account role for short-lived credentials,
 (2) clones the Git subfolder recorded on the Agent (`assets/agents/econresearch`) from the catalog
 source, (3) builds that Dockerfile into an image and pushes it into your AWS account, and
@@ -250,16 +250,16 @@ Chat with each from the **Instances** view (`http://${AR_IP}:12121/are/instances
 See the
 ["If you completed Part 3"](agentcore-cleanup.md#if-you-completed-part-3-register-and-deploy-agents-to-agentcore)
 section of the consolidated [Cleanup](agentcore-cleanup.md) guide to remove the deployments and
-catalog entries this lab created. Do that before tearing down Part 1's integration — a Deployment
+catalog entries this lab created. Do that before tearing down Part 1's integration; a Deployment
 can't outlive the Runtime it targets.
 
 ## Next
 
 - [Part 4: Approval-Gated Agent Onboarding](agentcore-04-approval-onboarding.md) onboards the
   fourth vertical agent, `ithelpdesk`, the governed way: submitted by a non-admin, staged
-  behind admin approval — and blocked from deploying until approved.
+  behind admin approval, and blocked from deploying until approved.
 - [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md) does exactly
-  what this agent teases: live FRED data via `spec.mcpServers` through Agentgateway — plus the
+  what this agent teases: live FRED data via `spec.mcpServers` through Agentgateway, plus the
   LLM traffic routed through the same gateway.
 - Govern who can see and submit the new assets: [AccessPolicy / RBAC](../access-control/access-policies.md)
   and [Approval Workflows](../access-control/approval-workflows.md).

@@ -1,11 +1,11 @@
 # In-Cluster MCP Server with a Credential (FRED)
 
 The [In-Cluster MCP](in-cluster-mcp.md) lab self-hosted a server that needed no credentials. Most
-real MCP servers do — they call some backend API on your behalf. This lab covers that case with the
+real MCP servers do need one: they call some backend API on your behalf. This lab covers that case with the
 **FRED** (Federal Reserve Economic Data) MCP server, which needs its own `FRED_API_KEY` to reach the
 St. Louis Fed API.
 
-The important idea: **that credential is the MCP server's own config, not the registry's.** You keep
+**That credential is the MCP server's own config, not the registry's.** You keep
 it in a Kubernetes `Secret` next to the workload; agentregistry only registers the in-cluster Service
 URL and never sees the key. This is the recommended pattern for any MCP server with a backend
 credential.
@@ -20,7 +20,7 @@ credential.
 
 - Store an MCP server's API key in a Kubernetes `Secret`
 - Deploy the MCP server in-cluster, consuming the key via `secretKeyRef`
-- Register it in the catalog by Service URL — with **no credential in the catalog object**
+- Register it in the catalog by Service URL, with **no credential in the catalog object**
 - Call a tool that exercises the credentialed upstream
 
 ## Pre-requisites
@@ -54,7 +54,7 @@ kubectl create secret generic fred-api-key -n mcp \
 ## 2. Deploy the MCP Server (consuming the Secret)
 
 [`assets/mcp/in-cluster/fred-deployment.yaml`](../../assets/mcp/in-cluster/fred-deployment.yaml)
-injects the key via `secretKeyRef` — the key never appears in the manifest:
+injects the key via `secretKeyRef`; the key never appears in the manifest:
 
 ```yaml
 env:
@@ -83,7 +83,7 @@ kubectl -n agentgateway-system get gateway agentregistry-gateway -w
 ## 4. Catalog and Deploy
 
 Note the catalog entry ([`fred-mcp.yaml`](../../assets/mcp/in-cluster/fred-mcp.yaml)) has **no
-credential** — just the Service URL:
+credential**, just the Service URL:
 
 ```bash
 cat assets/mcp/in-cluster/fred-mcp.yaml assets/mcp/in-cluster/fred-mcp-deploy.yaml
@@ -94,12 +94,12 @@ arctl get deployment fred-incluster-agw -o yaml | grep -E "reason:|url:"
 ```
 
 Expect `reason: DeployedViaAgentgateway` and `url: http://<gateway-address>/registry/fred`.
-(If it's stuck at `NoAcceptedListener`, the Gateway wasn't programmed yet — `arctl delete` the
+(If it's stuck at `NoAcceptedListener`, the Gateway wasn't programmed yet: `arctl delete` the
 deployment and re-apply.)
 
 Confirm the key really is absent from the catalog object (only the URL is stored). We grep for the
-markers that *would* indicate a stored credential — a caller `headers:` block, a `secretRef`, or the
-`FRED_API_KEY` name itself — rather than bare words like `key`/`secret`, which also appear in the
+markers that *would* indicate a stored credential (a caller `headers:` block, a `secretRef`, or the
+`FRED_API_KEY` name itself) rather than bare words like `key`/`secret`, which also appear in the
 asset's own description:
 
 ```bash
@@ -140,7 +140,7 @@ fred_search
 fred_get_series
 ```
 
-Fetch a real economic series — this only works because the server has a valid `FRED_API_KEY`:
+Fetch a real economic series. This only works because the server has a valid `FRED_API_KEY`:
 
 ```bash
 curl -s -X POST "${H[@]}" \
@@ -149,7 +149,7 @@ curl -s -X POST "${H[@]}" \
 ```
 
 You get real GDP data (`"title": "Gross Domestic Product"`, quarterly observations). If the key were
-missing or wrong, this `tools/call` would fail at the upstream while `tools/list` still worked — a
+missing or wrong, this `tools/call` would fail at the upstream while `tools/list` still worked, a
 useful way to tell a credential problem apart from a connectivity problem.
 
 ## Where the Credential Lives
@@ -162,7 +162,7 @@ client → gateway LB /registry/fred
 ```
 
 The catalog entry, the generated backend, and the gateway are all credential-free. The only place
-the key exists is the Kubernetes `Secret` mounted into the pod — manage and rotate it with your usual
+the key exists is the Kubernetes `Secret` mounted into the pod. Manage and rotate it with your usual
 secret tooling (External Secrets Operator, Vault CSI, sealed-secrets).
 
 ## Cleanup

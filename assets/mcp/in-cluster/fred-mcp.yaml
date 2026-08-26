@@ -1,6 +1,6 @@
 # Catalog entry for the in-cluster FRED MCP server.
 #
-# Note what is NOT here: there is no credential in this catalog object. FRED's
+# This catalog object carries no credential. FRED's
 # API key lives only in the `fred-api-key` Kubernetes Secret consumed by the
 # workload (fred-deployment.yaml). agentregistry just points at the Service URL.
 apiVersion: ar.dev/v1alpha1
