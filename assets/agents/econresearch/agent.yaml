@@ -13,8 +13,6 @@ metadata:
   tag: "1.0.0"
 spec:
   description: "Economic research assistant for financial services teams - key U.S. economic indicators (fed funds, CPI, unemployment, treasury, mortgage rates) from a curated snapshot"
-  modelName: us.anthropic.claude-sonnet-4-6
-  modelProvider: bedrock
   source:
     image: localhost:5001/econresearch:latest
     repository:

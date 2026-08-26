@@ -49,7 +49,7 @@ token_for() {
 ```bash
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.7.0 \
+  --version 2026.8.0 \
   --namespace agentregistry-system \
   --reuse-values \
   --set config.requireCreateApproval=true
@@ -107,8 +107,6 @@ metadata:
 spec:
   title: approval-test-agent
   description: "Test agent for approval workflow validation"
-  modelProvider: anthropic
-  modelName: claude-sonnet-4-6
   source:
     image: docker.io/python:3.13-slim
 EOF
@@ -129,8 +127,7 @@ ARCTL_API_TOKEN=$(token_for reader) arctl get agent approval-test-agent --tag 1.
 
 ## 4. Approve the Pending Request
 
-Three ways to review and approve or reject a pending submission. All three operate
-on the same `/v0/approve` resource.
+The three methods below all operate on the same `/v0/approve` resource.
 
 ### Method 1 (recommended): AgentRegistry UI
 
@@ -171,8 +168,8 @@ curl -s -X POST \
 
 ### Method 3: integrate into your own UI
 
-`/v0/approve` isn't special-cased to the product UI. Any internal tool can call it
-directly: `GET /v0/approve` for the pending list, then `POST /v0/approve` with
+Any internal tool can call `/v0/approve` directly, the same way the product UI
+does: `GET /v0/approve` for the pending list, then `POST /v0/approve` with
 `{"action": "approve" | "reject", "items": [...]}` for the selected tuples.
 
 ## 5. Verify the Asset Is in the Catalog
@@ -195,7 +192,7 @@ arctl delete accesspolicy are-readers-catalog-write 2>/dev/null || true
 # disable the flag (does not retroactively release queued requests; reject those first)
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.7.0 \
+  --version 2026.8.0 \
   --namespace agentregistry-system \
   --reuse-values \
   --set config.requireCreateApproval=false

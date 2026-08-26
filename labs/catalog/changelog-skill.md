@@ -3,8 +3,8 @@
 You wrote yourself a small `/changelog` skill: when you invoke it, it reads the conversation, drafts a
 concise `CHANGELOG.md` entry in your repo's existing format, and shows it to you before writing. It
 started life as a single markdown file in `~/.claude/` on your laptop. It's handy, and now the rest of
-the team wants the same thing — but emailing the file around means copies drift, nobody knows which one
-is current, and a fix has to be chased down across everyone who has it. Instead you publish the skill
+the team wants the same thing. Emailing the file around means copies drift, nobody knows which one
+is current, and fixing a bug means chasing down everyone who has a copy. Instead you publish the skill
 once to the Agentregistry catalog, version it, and let teammates pull it on demand.
 
 This lab walks that path end to end with the `changelog` skill: scaffold and inspect a skill project,
@@ -16,7 +16,7 @@ manifest (`ar.dev/v1alpha1`, `kind: Skill`) and a `SKILL.md` file with YAML fron
 body of instructions an agent loads at runtime.
 
 > Prefer the customer-RFE example? [Field RFE Skill](field-rfe-skill.md) runs the same flow with the `field-rfe` skill.
-> This lab is self-contained — do either or both.
+> This lab is self-contained; do either or both.
 
 ## Lab Objectives
 
@@ -175,7 +175,7 @@ Open the [Agentregistry UI](http://localhost:12121/) (or your `$AR_IP` on port `
 
 ## 6. Publish a Second Version
 
-A teammate points out the skill only ever creates a new version entry — fine on `main`, but noisy when
+A teammate points out the skill only ever creates a new version entry: fine on `main`, but noisy when
 they run it on a feature branch. You update the `SKILL.md` so it branches: a new patch entry on
 `main`/`master`, but appends to the latest entry on any other branch. Publish it as a new tag so the
 existing `1.0.0` stays unchanged for anyone using it. Apply `1.1.0` (the description reflects the

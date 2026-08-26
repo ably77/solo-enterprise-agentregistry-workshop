@@ -79,7 +79,7 @@ arctl get runtime virtual-default -o yaml
 
 ## 3. Catalog the Solo.io Docs MCP Server
 
-No `envsubst`, no token - the upstream is public:
+The upstream is public, so there's no `envsubst` and no token:
 
 ```bash
 cat assets/mcp/agentgateway/solo-docs-remote-mcp.yaml
@@ -118,7 +118,7 @@ Look for `status.conditions[].reason: DeployedViaAgentgateway` (`status: "True"`
 > **(Air-gap) This is the first step that exercises the server-managed backend binaries.** To
 > provision this backend the server downloads `agw-sync` / `agentgateway` / `agentregistry-sts` from
 > `global.binaryHost` (set during the [air-gap install](../installation/airgap/001-airgap.md)). If the
-> Deployment never reaches `DeployedViaAgentgateway` — it stays pending with no clear error — your
+> Deployment never reaches `DeployedViaAgentgateway` (it stays pending with no clear error), your
 > binary host is the prime suspect. Confirm the download succeeded:
 > ```bash
 > kubectl logs -n agentregistry-system deploy/agentregistry-enterprise-server | grep -i -E "download|agw-sync|agentgateway|sts"

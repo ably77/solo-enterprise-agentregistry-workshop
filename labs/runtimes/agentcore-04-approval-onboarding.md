@@ -77,7 +77,7 @@ from Part 1:
 ```bash
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.7.0 \
+  --version 2026.8.0 \
   --namespace agentregistry-system \
   --reuse-values \
   --set config.requireCreateApproval=true
@@ -161,6 +161,9 @@ spec:
   runtimeRef:
     kind: Runtime
     name: agentcore
+  modelRef:
+    name: default
+    tag: latest
   runtimeConfig:
     region: ${AWS_REGION}
     workdir: assets/agents/ithelpdesk
@@ -274,7 +277,7 @@ arctl delete accesspolicy are-readers-agent-onboarding
 # disabling the flag does not release queued requests; reject any leftovers first
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.7.0 \
+  --version 2026.8.0 \
   --namespace agentregistry-system \
   --reuse-values \
   --set config.requireCreateApproval=false
@@ -303,5 +306,5 @@ section also restores the flag and removes the AccessPolicy.
 
 - [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md) extends
   `econresearch` so its LLM and MCP traffic both route through Agentgateway.
-- [Approval Workflows](../access-control/approval-workflows.md) — the full approval-mechanics
+- [Approval Workflows](../access-control/approval-workflows.md): the full approval-mechanics
   lab this one builds on, including custom `/v0/approve` integrations.

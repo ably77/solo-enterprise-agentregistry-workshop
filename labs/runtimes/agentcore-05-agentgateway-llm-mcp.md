@@ -15,7 +15,7 @@ planes route through the workshop's in-cluster Agentgateway**:
 
 - **LLM plane:** an OpenAI model (`gpt-5.4-nano`) consumed through a `/openai` gateway route.
   The OpenAI API key lives in a Kubernetes `Secret` next to the gateway; the agent never holds
-  it — the gateway injects it upstream.
+  it; the gateway injects it upstream.
 - **Tool plane:** the real **FRED** (Federal Reserve Economic Data) MCP server from the
   [FRED MCP lab](../mcp/fred-mcp.md), served at `/registry/fred`, attached to the agent via
   `spec.mcpServers`. The offline snapshot is gone; every number is fetched live.
@@ -57,14 +57,14 @@ and enforce policy.
   shows `agentcore`.
 - A **publicly reachable** Agentgateway LoadBalancer. The agent runs in AWS, so it must be able
   to reach your gateway over the internet. Managed clusters (EKS/GKE/AKS) with a public LB: yes.
-  **kind/local clusters: the deploy in section 4 will not work** — you can still read along and
+  **kind/local clusters: the deploy in section 4 will not work**, though you can still read along and
   run sections 1–2. (The production answer for private networking is the registry's managed
   EC2 gateway; see [Next](#next).)
-- A **FRED API key** — free, takes about two minutes:
+- A **FRED API key** (free, takes about two minutes):
   1. Create a free account (or sign in) at https://fredaccount.stlouisfed.org/login
   2. Open **My Account → API Keys** (https://fredaccount.stlouisfed.org/apikeys) and click
      **Request API Key**
-  3. Enter a one-line description of your use (e.g. "workshop demo agent") and submit — the
+  3. Enter a one-line description of your use (e.g. "workshop demo agent") and submit; the
      32-character key is issued immediately; copy it for the shell context below
   (Details: https://fred.stlouisfed.org/docs/api/api_key.html)
 - An **OpenAI API key**: https://platform.openai.com/api-keys
@@ -84,13 +84,13 @@ export AWS_REGION=us-east-1   # must match the region you used in Part 1
 ```
 
 > **Security callout:** this lab exposes an **unauthenticated** `/openai` route on a public
-> LoadBalancer — anyone who finds the address can spend your OpenAI credits. This is a
+> LoadBalancer: anyone who finds the address can spend your OpenAI credits. This is a
 > workshop-only posture: tear it down promptly ([Cleanup](agentcore-cleanup.md)), or harden it
 > with gateway auth / virtual keys (see [Next](#next)).
 
 ## 1. FRED MCP Server Through the Gateway
 
-Condensed from the [FRED MCP lab](../mcp/fred-mcp.md) — **skip to step 1.4 if you've already
+Condensed from the [FRED MCP lab](../mcp/fred-mcp.md). **Skip to step 1.4 if you've already
 done that lab** and `arctl get deployment fred-incluster-agw` shows `DeployedViaAgentgateway`.
 
 ### 1.1 Secret + workload
@@ -109,7 +109,7 @@ kubectl rollout status deployment/mcp-fred -n mcp
 
 ### 1.2 Parent Gateway
 
-Shared with the MCP labs — skip if already applied:
+Shared with the MCP labs; skip if already applied:
 
 ```bash
 kubectl apply -f assets/mcp/agentgateway/parent-gateway-and-route.yaml
@@ -130,7 +130,7 @@ Expect `reason: DeployedViaAgentgateway` and `url: http://<gateway-address>/regi
 
 ### 1.4 The reachability gate
 
-Capture the gateway address and confirm it's public — this is the go/no-go for section 4:
+Capture the gateway address and confirm it's public; this is the go/no-go for section 4:
 
 ```bash
 export AGW_ADDRESS=$(kubectl -n agentgateway-system get gateway agentregistry-gateway \
@@ -139,7 +139,7 @@ echo "gateway: ${AGW_ADDRESS}"
 ```
 
 If `AGW_ADDRESS` is a private IP (`10.*`, `172.16-31.*`, `192.168.*`) or `localhost`, AgentCore
-cannot reach it — sections 1–2 still work from your machine, but stop before section 4.
+cannot reach it; sections 1–2 still work from your machine, but stop before section 4.
 
 ## 2. OpenAI Route on the Same Gateway
 
@@ -168,7 +168,7 @@ The backend is **unpinned** (`openai: {}`), so the calling agent picks the model
 `openai.model` at the backend instead turns the gateway into the enforcement point for which
 model an organization allows.
 
-### 2.3 Prove it with curl — no agent, no API key on the client
+### 2.3 Prove it with curl: no agent, no API key on the client
 
 ```bash
 curl -s -X POST "http://${AGW_ADDRESS}/openai" \
@@ -183,10 +183,10 @@ Expected:
 gateway works
 ```
 
-Note what just happened: the request carried **no** `Authorization` header. The gateway matched
+The request carried **no** `Authorization` header. The gateway matched
 `/openai`, injected the key from `openai-secret`, and proxied to OpenAI. That's the LLM plane
-the agent will use. (404 instead? Try `http://${AGW_ADDRESS}/openai/chat/completions` — the
-exact path handling depends on the agentgateway version — and use whichever form works as the
+the agent will use. (404 instead? The exact path handling depends on the agentgateway version:
+try `http://${AGW_ADDRESS}/openai/chat/completions` and use whichever form works as the
 mental model for the agent's traffic; the agent's OpenAI client appends `/chat/completions`
 to its base URL.)
 
@@ -207,19 +207,19 @@ return LiteLlm(
 )
 ```
 
-The `api_key` is a placeholder — the gateway injects the real one (section 2).
+The `api_key` is a placeholder; the gateway injects the real one (section 2).
 
-**Gateway discovery (`gateway.py`).** How does the agent know your gateway's address? It can't
+**Gateway discovery (`gateway.py`).** The agent needs your gateway's address, but it can't
 be baked into the source (this folder is cloned from a shared GitHub URL at deploy time), and
 AgentCore deployments accept no custom env vars from the registry. But the registry *does*
-inject `MCP_SERVERS_CONFIG` — and because `fred-gateway-mcp`'s catalog URL is the gateway's
+inject `MCP_SERVERS_CONFIG`, and because `fred-gateway-mcp`'s catalog URL is the gateway's
 `/registry/fred` route, the agent can derive its LLM base URL from the MCP config's origin:
 `http://<gw>/registry/fred` → `http://<gw>/openai`. The registry already tells the agent where
-its gateway is — via the MCP config. (`OPENAI_BASE_URL` overrides this for local runs.)
+its gateway is, via the MCP config. (`OPENAI_BASE_URL` overrides this for local runs.)
 
 **Snapshot out, live tools in.** `ECON_SERIES`, `list_series`, and `get_series_latest` are
-deleted. The agent's only tools are the FRED MCP server's — `fred_browse`, `fred_search`,
-`fred_get_series` — resolved from `agent.yaml`:
+deleted. The agent's only tools are the FRED MCP server's (`fred_browse`, `fred_search`,
+`fred_get_series`), resolved from `agent.yaml`:
 
 ```yaml
 spec:
@@ -234,7 +234,7 @@ are injected into the agent's `MCP_SERVERS_CONFIG` by their **catalog URL** with
 deploy-time wiring.
 
 The instruction changes to match: cite series IDs and **observation dates**, disclose the data
-is live from FRED — the "demo snapshot" disclaimer is gone.
+is live from FRED; the "demo snapshot" disclaimer is gone.
 
 ## 4. Publish and Deploy
 
@@ -242,7 +242,7 @@ is live from FRED — the "demo snapshot" disclaimer is gone.
 
 ### 4.1 Catalog the agent-facing FRED entry
 
-`fred-incluster-mcp` (section 1) is registered by its **cluster-internal** Service URL — right
+`fred-incluster-mcp` (section 1) is registered by its **cluster-internal** Service URL: right
 for gateway routing, useless to an agent running in AWS. Create a second, agent-facing entry
 whose URL is the gateway's public route. This is the URL the registry will inject into the
 agent's `MCP_SERVERS_CONFIG`:
@@ -261,18 +261,27 @@ spec:
 EOF
 ```
 
-Note there is still **no credential** here — the FRED key stays in its `Secret` from
+Note there is still **no credential** here; the FRED key stays in its `Secret` from
 section 1.1; this entry only names where agents should call.
 
 > **Why not `deploymentRefs`?** You might expect to link the agent deployment to
 > `fred-incluster-agw` via `spec.deploymentRefs` and let the registry resolve the gateway URL.
-> As of `v2026.7.0` the registry rejects that with `ErrMCPSetMismatch`: its set-equality
+> The registry rejects that with `ErrMCPSetMismatch`: its set-equality
 > validation excludes *remote* MCPServers (like `fred-incluster-mcp`, registered by URL) from
 > the set `deploymentRefs` may wire, so the ref is treated as an extra. Until that's relaxed
 > upstream, the agent-facing catalog entry above is the working pattern; the trade-off is that
 > your gateway address lives in a catalog entry you create per-environment.
 
 ### 4.2 Publish and deploy the agent
+
+> **Model note.** This agent is the one place the workshop uses the deprecated
+> `Agent.spec.modelProvider`/`modelName` fields: the `Model` catalog resource supports only the
+> `bedrock` provider today, and `econresearch-agw` calls **OpenAI** through the gateway. Expect a
+> warning on apply (`uses deprecated spec.modelProvider/modelName; the values are preserved for
+> compatibility only and do not select a runtime model`). Because AgentCore deployments require
+> `spec.modelRef`, the Deployment below references the workshop's `default` Bedrock Model to
+> satisfy the harness; the agent's actual LLM traffic still goes to OpenAI via LiteLLM through
+> the Agentgateway `/openai` route.
 
 ```bash
 arctl apply -f assets/agents/econresearch-agw/agent.yaml
@@ -290,6 +299,9 @@ spec:
   runtimeRef:
     kind: Runtime
     name: agentcore
+  modelRef:
+    name: default
+    tag: latest
   runtimeConfig:
     region: ${AWS_REGION}
     workdir: assets/agents/econresearch-agw
@@ -299,18 +311,18 @@ arctl get deployments
 ```
 
 `econresearch-agw` deploys alongside the Part 3 agents, distinguished by its `AgentCore` platform
-badge and `aws` runtime just like the others — the difference is invisible at this level; it
+badge and `aws` runtime just like the others. The difference is invisible at this level; it
 shows up in *how* the agent reaches its model and tools, not in the deploy mechanics:
 
 ![Instances view showing econresearch-agw deployed alongside the Part 3 agents](../../assets/screenshots/25-are-ui-agentcore-agw-instances.png)
 
 The Deployment moves `deploying` → `deployed` (clone, dependency install from the agent's
-`requirements.txt`, AgentCore rollout — a few minutes, same phases as
+`requirements.txt`, AgentCore rollout; a few minutes, same phases as
 [Part 3](agentcore-03-deploy-agents.md)).
 
 > **`requirements.txt`, not the Dockerfile.** On the AgentCore path the registry generates its
 > own wrapper and installs Python deps from the agent folder's `requirements.txt` (appending
-> its defaults: `kagent-adk`, `google-adk`, `boto3`, …) — the checked-in `Dockerfile` and
+> its defaults: `kagent-adk`, `google-adk`, `boto3`, …); the checked-in `Dockerfile` and
 > `pyproject.toml` are not consulted. That's why this agent ships a one-line `requirements.txt`
 > pinning `litellm`, the only package the defaults don't cover.
 
@@ -324,7 +336,7 @@ Open the **Instances** view (`http://${AR_IP}:12121/are/instances/`), select
 
 Check the answer against Part 3's `econresearch`:
 
-- It cites **recent observation dates** (this month/quarter — live FRED data), not the fixed
+- It cites **recent observation dates** (this month/quarter, live FRED data), not the fixed
   snapshot dates, and no "demo snapshot" disclaimer appears.
 - The tool calls are `fred_search` / `fred_get_series`, not `get_series_latest`.
 
@@ -341,7 +353,7 @@ aws logs tail "/aws/bedrock-agentcore/runtimes/<runtime-id>-DEFAULT" \
 ```
 
 and the gateway sees the LLM and MCP traffic. Note the time, ask the chat question, then filter
-the gateway's logs to just the two routes this agent uses — `--tail=50` on its own is too broad
+the gateway's logs to just the two routes this agent uses; `--tail=50` on its own is too broad
 on a shared cluster (other MCP deployments hit the same gateway) to prove the traffic is *yours*:
 
 ```bash
@@ -358,10 +370,10 @@ Expected: one line per LLM call and per MCP tool call, interleaved by timestamp:
 ...route=agentgateway-system/openai-llm ... http.path=/openai/chat/completions ... protocol=llm gen_ai.provider.name=openai gen_ai.request.model=gpt-5.4-nano ... duration=1206ms
 ```
 
-Two things confirm this is genuinely *your* agent's traffic through the gateway, not noise from
+Confirm this is *your* agent's traffic through the gateway, not noise from
 another deployment sharing it:
 
-- Every `/registry/fred` line for one chat turn carries the **same `mcp.session.id`** — one
+- Every `/registry/fred` line for one chat turn carries the **same `mcp.session.id`**: one
   session, opened by `econresearch-agw`, making multiple tool calls (`fred_search` to find the
   right series, then `fred_get_series` to read it).
 - The `/openai` and `/registry/fred` lines interleave in time (LLM call → tool calls → LLM call
@@ -371,7 +383,7 @@ another deployment sharing it:
 The `gen_ai.*` fields are themselves useful signal: `gen_ai.usage.input_tokens` /
 `output_tokens` / `agw.ai.usage.cost.total` on the LLM lines, and `gen_ai.tool.name` on the MCP
 lines, are exactly what you'd want in a real deployment to attribute spend and tool usage per
-agent from the gateway alone — without instrumenting the agent itself.
+agent from the gateway alone, without instrumenting the agent itself.
 
 ## Troubleshooting
 
@@ -380,11 +392,11 @@ agent from the gateway alone — without instrumenting the agent itself.
 | curl in 2.3 returns 401/`invalid_api_key` | `openai-secret` wrong or missing: recreate it from `$OPENAI_API_KEY` (2.1) and re-check. The key must be under the `Authorization` key of the Secret. |
 | curl in 2.3 returns 404 | Route/path mismatch: confirm the HTTPRoute is `Accepted` (`kubectl -n agentgateway-system describe httproute openai-llm`) and try the `/openai/chat/completions` form. |
 | curl in 2.3 rejects the model name | Backend pinned to a different model: unpin (`openai: {}`) or match the pinned name. |
-| Agent deploys but replies with connection errors to the LLM | The gateway isn't reachable *from AWS*: re-check section 1.4 — a private LB address works from your laptop but not from AgentCore. |
-| Deploy fails with `ErrMCPSetMismatch` mentioning an MCP that *is* declared | You added `deploymentRefs` — the registry excludes remote MCPServers from the set `deploymentRefs` may wire, so the ref counts as extra (see the note in 4.1). Drop `deploymentRefs`; the remote `fred-gateway-mcp` entry needs none. |
+| Agent deploys but replies with connection errors to the LLM | The gateway isn't reachable *from AWS*: re-check section 1.4; a private LB address works from your laptop but not from AgentCore. |
+| Deploy fails with `ErrMCPSetMismatch` mentioning an MCP that *is* declared | You added `deploymentRefs`; the registry excludes remote MCPServers from the set `deploymentRefs` may wire, so the ref counts as extra (see the note in 4.1). Drop `deploymentRefs`; the remote `fred-gateway-mcp` entry needs none. |
 | Agent has no FRED tools (answers from memory or refuses) | MCP wiring: `spec.mcpServers` names `fred-gateway-mcp` in the published agent (`arctl get agent econresearch-agw -o yaml`), and that catalog entry's `remote.url` is your gateway's public `/registry/fred` (4.1). |
-| Agent crashes at startup with `cannot determine the agentgateway LLM base URL` | `MCP_SERVERS_CONFIG` wasn't injected — same MCP-wiring checks as above; the LLM base URL is derived from it. |
-| First chat fails with `Fail to load 'econresearch_agw' module. LiteLLM support requires...` | The image was built without `litellm`. The deploy log's "Final requirements.txt" (visible in the Instances view's Logs panel) shows exactly what the builder installed — if it's only the auto-generated `kagent-adk`/`google-adk`/etc. defaults with no `litellm` line, the builder never saw your checked-in `requirements.txt` at all. This isn't necessarily a local file problem: `agent.yaml`'s `source.repository` clones a specific **branch on GitHub**, not your working tree, so if `requirements.txt` was added in a commit that hasn't been pushed to that branch yet, the clone predates the file. Confirm with `git log <branch> -- <subfolder>/requirements.txt` against the remote, push/merge if needed, then `arctl delete deployment <name>` + re-`apply` to force a fresh clone and build (re-`apply`-ing the same Deployment spec unchanged does not retrigger a rebuild). |
+| Agent crashes at startup with `cannot determine the agentgateway LLM base URL` | `MCP_SERVERS_CONFIG` wasn't injected: same MCP-wiring checks as above; the LLM base URL is derived from it. |
+| First chat fails with `Fail to load 'econresearch_agw' module. LiteLLM support requires...` | The image was built without `litellm`. The deploy log's "Final requirements.txt" (visible in the Instances view's Logs panel) shows exactly what the builder installed; if it's only the auto-generated `kagent-adk`/`google-adk`/etc. defaults with no `litellm` line, the builder never saw your checked-in `requirements.txt` at all. This isn't necessarily a local file problem: `agent.yaml`'s `source.repository` clones a specific **branch on GitHub**, not your working tree, so if `requirements.txt` was added in a commit that hasn't been pushed to that branch yet, the clone predates the file. Confirm with `git log <branch> -- <subfolder>/requirements.txt` against the remote, push/merge if needed, then `arctl delete deployment <name>` + re-`apply` to force a fresh clone and build (re-`apply`-ing the same Deployment spec unchanged does not retrigger a rebuild). |
 | FRED `tools/list` works but `tools/call` fails | FRED credential problem, not connectivity: check the `fred-api-key` Secret (see the [FRED MCP lab](../mcp/fred-mcp.md)). |
 
 ## Cleanup
@@ -392,18 +404,18 @@ agent from the gateway alone — without instrumenting the agent itself.
 See the
 ["If you completed Part 5"](agentcore-cleanup.md#if-you-completed-part-5-llm-and-mcp-through-agentgateway)
 section of the consolidated [Cleanup](agentcore-cleanup.md) guide to remove the agent, the OpenAI
-route, and the FRED resources this lab created. Do that before tearing down Part 1's integration
-— a Deployment can't outlive the Runtime it targets.
+route, and the FRED resources this lab created. Do that before tearing down Part 1's integration;
+a Deployment can't outlive the Runtime it targets.
 
 ## Summary
 
 Both of `econresearch`'s data planes now route through the same in-cluster Agentgateway instead
 of going direct:
 
-- **Tool plane:** the real FRED MCP server, deployed and exposed at `/registry/fred` — the
-  offline snapshot is gone, every number is a live observation.
+- **Tool plane:** the real FRED MCP server, deployed and exposed at `/registry/fred`. The
+  offline snapshot is gone; every number is a live observation.
 - **LLM plane:** an OpenAI backend behind `/openai`, with the API key living in a `Secret` next
-  to the gateway and injected upstream — the agent never holds it.
+  to the gateway and injected upstream; the agent never holds it.
 - **The agent as a diff:** `econresearch-agw` swaps the Bedrock adapter for ADK's built-in
   LiteLLM wrapper, derives its gateway address from the injected `MCP_SERVERS_CONFIG` instead of
   a baked-in URL, and drops the snapshot tools for the FRED MCP's live ones.
@@ -411,6 +423,6 @@ of going direct:
   gateway's public URL, since `deploymentRefs` can't resolve a remote MCPServer today) let the
   registry publish and deploy the agent to AgentCore unchanged from Part 3's flow.
 - **Verified:** answers cite current observation dates and use `fred_search`/`fred_get_series`,
-  confirming the agent is grounded in live data — and both the LLM and MCP traffic are visible
+  confirming the agent is grounded in live data, and both the LLM and MCP traffic are visible
   in the same gateway log stream, one place to observe and govern everything the agent calls out
   to.

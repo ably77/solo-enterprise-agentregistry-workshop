@@ -40,7 +40,7 @@ ClickHouse both request PVs. If none is default:
 kubectl annotate storageclass <name> storageclass.kubernetes.io/is-default-class=true
 ```
 
-**Confirm a `LoadBalancer` Service can actually get an external address.** OIDC redirects and the
+**Confirm a `LoadBalancer` Service can get an external address.** OIDC redirects and the
 `arctl`/UI endpoints all depend on this, so test it now rather than discovering it later:
 
 ```bash
@@ -58,7 +58,7 @@ If `EXTERNAL-IP` stays `<pending>`, install/fix your LoadBalancer provider befor
 ## 2. Install the `arctl` CLI
 
 ```bash
-export ARCTL_VERSION=v2026.7.0
+export ARCTL_VERSION=v2026.8.0
 curl -sSL https://storage.googleapis.com/agentregistry-enterprise/install.sh \
   | ARCTL_VERSION=$ARCTL_VERSION sh
 export PATH=$HOME/.arctl/bin:$PATH
@@ -76,7 +76,7 @@ Expected (server is empty until step 4 - that's fine):
 ```json
 {
   "cli": {
-    "version": "v2026.7.0",
+    "version": "v2026.8.0",
     "git_commit": "...",
     "build_time": "..."
   }
@@ -196,7 +196,7 @@ group **name** in the `groups` claim (Keycloak emits names, not GUIDs).
 ```bash
 cat > /tmp/are-values.yaml <<EOF
 image:
-  tag: v2026.7.0
+  tag: v2026.8.0
 service:
   type: LoadBalancer
 oidc:
@@ -223,7 +223,7 @@ EOF
 
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.7.0 \
+  --version 2026.8.0 \
   --namespace agentregistry-system \
   -f /tmp/are-values.yaml \
   --wait --timeout 5m
@@ -283,13 +283,13 @@ kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/downloa
 # Agentgateway CRDs
 helm upgrade --install agentgateway-crds \
   oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway-crds \
-  --version v2026.6.3 \
+  --version v2026.7.1-patch.1 \
   --namespace agentgateway-system --create-namespace
 
 # Agentgateway controller
 helm upgrade --install enterprise-agentgateway \
   oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway \
-  --version v2026.6.3 \
+  --version v2026.7.1-patch.1 \
   --namespace agentgateway-system \
   --set-string licensing.licenseKey="${SOLO_TRIAL_LICENSE_KEY}"
 ```
@@ -330,7 +330,7 @@ Waiting for authentication...
 Open that URL in a browser, enter the code, sign in as **`admin` / `admin`**, and approve. The CLI
 prints `token stored in keychain successfully`.
 
-The browser walks you through three screens — sign in, grant access to the `are-cli` client, then a
+The browser walks you through three screens: sign in, grant access to the `are-cli` client, then a
 success page you can close:
 
 | 1. Sign in (`admin` / `admin`) | 2. Grant access | 3. Success |
@@ -340,15 +340,13 @@ success page you can close:
 Confirm the baseline works:
 
 ```bash
-# 3 built-in runtimes ship out of the box
+# the virtual-default runtime ships out of the box
 arctl get runtimes
 ```
 
 ```
-NAME                 TYPE
-kubernetes-default   Kubernetes
-local                Local
-virtual-default      Virtual
+NAME              TYPE
+virtual-default   Virtual
 ```
 
 ```bash
@@ -357,7 +355,7 @@ arctl version --json
 ```
 
 ```json
-{ "cli": { "version": "v2026.7.0", ... }, "server": { "version": "v2026.7.0", ... } }
+{ "cli": { "version": "v2026.8.0", ... }, "server": { "version": "v2026.8.0", ... } }
 ```
 
 > **Confirm admin privileges.** Your `admin` user should be a superuser. The most reliable check is

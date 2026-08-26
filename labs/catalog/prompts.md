@@ -1,6 +1,6 @@
 # Prompts
 
-`Prompt` is a first-class Agentregistry catalog asset, same family as `Agent` and `MCPServer` - an
+`Prompt` is an Agentregistry catalog asset, same family as `Agent` and `MCPServer` - an
 immutable, versioned blob of prompt text that agents can reference by name + tag. You manage prompts
 with `arctl`, not `kubectl` (they live in the catalog, not in `etcd` as CRDs).
 
@@ -74,8 +74,8 @@ kubernetes-triage-system-prompt   1.0.0   System prompt for Kubernetes troublesh
 ## 3. Create an Org-Wide Guardrail Prompt
 
 Now the cross-org case: a safety/compliance baseline owned by a central governance team and inherited
-by **every** agent, regardless of which team built it. Nobody wants this copy/pasted into 30 agent
-repos where it drifts - it lives in the catalog once, and agents reference it. The manifest is at
+by **every** agent, regardless of which team built it. Copy/pasted into 30 agent repos it would
+drift; instead it lives in the catalog once, and agents reference it. The manifest is at
 [`assets/prompts/agent-safety-guardrails.yaml`](../../assets/prompts/agent-safety-guardrails.yaml):
 
 ```bash
@@ -147,7 +147,7 @@ arctl get prompt agent-safety-guardrails --tag "1.0.0" -o yaml   # no prompt-inj
 arctl get prompt agent-safety-guardrails --tag "1.0.1" -o yaml   # adds the prompt-injection rule
 ```
 
-**This is the cross-org payoff.** An agent pinned to `agent-safety-guardrails:1.0.0` keeps getting
+An agent pinned to `agent-safety-guardrails:1.0.0` keeps getting
 byte-for-byte the same content - the hotfix cannot change behavior out from under it. Teams adopt the
 fix by bumping a single tag reference, with no pull request into N agent repos and no code redeploy.
 Compare that to copy/pasted prompt text, where a security fix means hunting down every divergent copy.

@@ -13,8 +13,6 @@ metadata:
   tag: "1.0.0"
 spec:
   description: "Insurance claim support assistant - claim status and policy coverage lookups (status, adjuster, amounts, coverage limits, deductible) from a curated snapshot"
-  modelName: us.anthropic.claude-sonnet-4-6
-  modelProvider: bedrock
   source:
     image: localhost:5001/claimsupport:latest
     repository:

@@ -49,7 +49,22 @@ export AWS_REGION=us-east-1   # must match the region you used in Part 1
 - Confirm your registry session is still valid with `arctl user whoami`; if it errors, re-run
   the `arctl user login` step from [001 - Installation](../../001-installation.md).
 
-## 1. Publish the `econresearch` Agent
+## 1. Publish the workshop `Model`
+
+Model choice lives in the catalog, not in each Agent: a `kind: Model` resource carries the
+provider, model id, auth strategy, and endpoint, and every Deployment picks one with
+`spec.modelRef`, which is **required** for AgentCore harness deployments like the ones in this lab.
+
+Publish the workshop's Bedrock Claude model once; every deploy in Parts 3–4 references it:
+
+```bash
+cat assets/models/default.yaml   # provider: bedrock, us.anthropic.claude-sonnet-4-6
+                                 # endpoint.region is us-east-1; edit if your AWS_REGION differs
+arctl apply -f assets/models/default.yaml
+arctl get models
+```
+
+## 2. Publish the `econresearch` Agent
 
 The catalog entry points at this repo: agentregistry clones `assets/agents/econresearch/` and
 builds its Dockerfile at deploy time. [Part 2](agentcore-02-create-agents.md) walks through the
@@ -63,12 +78,12 @@ arctl get agents
 
 Published agents also appear in the UI's **Catalog** view
 (`http://${AR_IP}:12121/are/catalog`). Shown here with all four workshop agents published
-(`claimsupport` and `bankingsupport` come in section 4; `ithelpdesk` arrives in
+(`claimsupport` and `bankingsupport` come in section 5; `ithelpdesk` arrives in
 [Part 4](agentcore-04-approval-onboarding.md) via the approval queue):
 
 ![Catalog view showing the four published agents at tag 1.0.0](../../assets/screenshots/21-are-ui-catalog-agents.png)
 
-## 2. Deploy the Agent to AgentCore
+## 3. Deploy the Agent to AgentCore
 
 ```bash
 arctl apply -f - <<EOF
@@ -84,6 +99,9 @@ spec:
   runtimeRef:
     kind: Runtime
     name: agentcore
+  modelRef:
+    name: default
+    tag: latest
   runtimeConfig:
     region: ${AWS_REGION}
     workdir: assets/agents/econresearch
@@ -97,7 +115,7 @@ arctl get deployments
 arctl get deployment econresearch -o yaml
 ```
 
-The Deployment moves through `deploying` → `deployed`. Under the hood, that transition is several
+The Deployment moves through `deploying` → `deployed`. That transition covers several
 distinct phases: the registry (1) assumes the cross-account role for short-lived credentials,
 (2) clones the Git subfolder recorded on the Agent (`assets/agents/econresearch`) from the catalog
 source, (3) builds that Dockerfile into an image and pushes it into your AWS account, and
@@ -109,7 +127,7 @@ build progress in the UI's **Instances** view (`http://${AR_IP}:12121/are/instan
 
 ![Instance Logs streaming the AgentCore build during the econresearch deploy](../../assets/screenshots/22-agentcore-instance-logs.png)
 
-## 3. Chat with the Agent + Tail CloudWatch
+## 4. Chat with the Agent + Tail CloudWatch
 
 Open the **Instances** view in the UI (`http://${AR_IP}:12121/are/instances/`), select
 `econresearch`, and ask it something a financial-services analyst would:
@@ -139,7 +157,7 @@ aws logs tail "/aws/bedrock-agentcore/runtimes/<runtime-id>-DEFAULT" \
   --region "${AWS_REGION}" --follow
 ```
 
-## 4. Deploy More Example Agents (optional)
+## 5. Deploy More Example Agents (optional)
 
 The catalog has two more vertical-use-case example agents built the same way as
 `econresearch`: same ADK/Bedrock scaffold ([Part 2](agentcore-02-create-agents.md) walks through
@@ -150,7 +168,7 @@ them), same `agentcore` Runtime from Part 1, and no new AWS setup required:
 | [`claimsupport`](../../assets/agents/claimsupport/) | Insurance claim support | `get_claim_status`, `get_policy_coverage` |
 | [`bankingsupport`](../../assets/agents/bankingsupport/) | Personal banking support | `get_account_summary`, `list_recent_transactions` |
 
-Publish and deploy each one the same way you did `econresearch` in sections 1-2:
+Publish and deploy each one the same way you did `econresearch` in sections 2-3 (the `Model` from section 1 is already in the catalog):
 
 ```bash
 arctl apply -f assets/agents/claimsupport/agent.yaml
@@ -167,6 +185,9 @@ spec:
   runtimeRef:
     kind: Runtime
     name: agentcore
+  modelRef:
+    name: default
+    tag: latest
   runtimeConfig:
     region: ${AWS_REGION}
     workdir: assets/agents/claimsupport
@@ -186,6 +207,9 @@ spec:
   runtimeRef:
     kind: Runtime
     name: agentcore
+  modelRef:
+    name: default
+    tag: latest
   runtimeConfig:
     region: ${AWS_REGION}
     workdir: assets/agents/bankingsupport
@@ -226,16 +250,16 @@ Chat with each from the **Instances** view (`http://${AR_IP}:12121/are/instances
 See the
 ["If you completed Part 3"](agentcore-cleanup.md#if-you-completed-part-3-register-and-deploy-agents-to-agentcore)
 section of the consolidated [Cleanup](agentcore-cleanup.md) guide to remove the deployments and
-catalog entries this lab created. Do that before tearing down Part 1's integration — a Deployment
+catalog entries this lab created. Do that before tearing down Part 1's integration; a Deployment
 can't outlive the Runtime it targets.
 
 ## Next
 
 - [Part 4: Approval-Gated Agent Onboarding](agentcore-04-approval-onboarding.md) onboards the
   fourth vertical agent, `ithelpdesk`, the governed way: submitted by a non-admin, staged
-  behind admin approval — and blocked from deploying until approved.
+  behind admin approval, and blocked from deploying until approved.
 - [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md) does exactly
-  what this agent teases: live FRED data via `spec.mcpServers` through Agentgateway — plus the
+  what this agent teases: live FRED data via `spec.mcpServers` through Agentgateway, plus the
   LLM traffic routed through the same gateway.
 - Govern who can see and submit the new assets: [AccessPolicy / RBAC](../access-control/access-policies.md)
   and [Approval Workflows](../access-control/approval-workflows.md).

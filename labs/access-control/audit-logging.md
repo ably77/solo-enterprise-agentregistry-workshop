@@ -1,4 +1,4 @@
-# Audit Logging — Who Did What in the Registry
+# Audit Logging: Who Did What in the Registry
 
 RBAC and approval workflows decide **who is allowed** to act on catalog assets. Audit logging is
 the matching evidence layer: a structured, tamper-evident record of **who did what**. It covers
@@ -19,9 +19,7 @@ required. A pointer to the production setup is at the end.
 
 ## Pre-requisites
 
-- [001 — Installation](../../001-installation.md) complete, on **Agentregistry Enterprise
-  `v2026.7.0` or newer**. Audit logging did not exist before `v2026.7.0`; check with
-  `arctl version` (server side) if unsure.
+- [001 - Installation](../../001-installation.md) complete.
 - Logged in as the `admin` (superuser), since enabling audit is a Helm/cluster operation.
 - Shell context:
 
@@ -137,7 +135,7 @@ endpoint points at the debug collector's in-cluster Service:
 ```bash
 helm upgrade agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.7.0 \
+  --version 2026.8.0 \
   --namespace agentregistry-system \
   --reuse-values \
   --set audit.enabled=true \
@@ -147,7 +145,7 @@ helm upgrade agentregistry-enterprise \
 ```
 
 > `--reuse-values` reuses the values from your **current** release, which is what you want at a
-> fixed `2026.7.0` baseline. One caveat: if you enable audit *and* bump the chart version in the
+> fixed `2026.8.0` baseline. One caveat: if you enable audit *and* bump the chart version in the
 > same command, `--reuse-values` won't pull in the new version's defaults. Bump first, then enable
 > audit.
 
@@ -255,7 +253,7 @@ To turn audit off again, re-run the upgrade with `--reuse-values --set audit.ena
 ```bash
 helm upgrade agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.7.0 \
+  --version 2026.8.0 \
   --namespace agentregistry-system \
   --reuse-values \
   --set audit.enabled=false \
@@ -275,5 +273,5 @@ in the docs.
 
 ## Next
 
-- [Approval Workflows](approval-workflows.md) — gate submissions behind admin approval (each
+- [Approval Workflows](approval-workflows.md): gate submissions behind admin approval (each
   approve/reject you make here shows up as an `approval` audit event)

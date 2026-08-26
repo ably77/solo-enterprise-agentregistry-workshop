@@ -4,14 +4,14 @@ Register a small in-tree MCP server with Agentregistry. The server is a zero-dep
 script exposing three tools (`get_time`, `random_number`, `reverse_string`) over `stdio`.
 Agentregistry clones it from a repo and treats it as a catalog asset that agents can reference.
 
-This is the simplest MCP lab - there's no `Deployment` and no gateway route. Catalog-only doesn't
-mean you can't run it, though. A stdio server has no network endpoint; it's spawned as a subprocess
+This is the simplest MCP lab: there's no `Deployment` and no gateway route. You can still run a
+catalog-only asset. A stdio server has no network endpoint; it's spawned as a subprocess
 by whatever hosts it. Once it's in the catalog you can consume it two ways:
 
 - Reference `demo-tools` in an Agent's `spec.mcpServers` block. The agent runtime spawns the server
   in-process; in-cluster that's inside the agent's pod.
 - Pull the source out of the catalog with `arctl pull` and run it on your own machine, as step 4
-  does. No agent and no infra; your laptop is the runtime.
+  does. Your laptop is the runtime; no agent or infrastructure is involved.
 
 ## Lab Objectives
 
@@ -89,8 +89,8 @@ ls ./demo-tools          # server.py + mcpserver.yaml
 > Use the declared tag. `demo-tools` exists only at `1.0.0`, with no `latest` alias, so a bare
 > `arctl pull mcp demo-tools` returns `resource not found`. Pass `--tag 1.0.0`.
 
-The server is zero-dependency Python over stdio, so you can drive it directly: pipe
-newline-delimited JSON-RPC into `python3 server.py` and read the responses. No agent, no gateway.
+The server is zero-dependency Python over stdio, so you can drive it directly, with no agent or
+gateway involved: pipe newline-delimited JSON-RPC into `python3 server.py` and read the responses.
 
 ```bash
 cd ./demo-tools

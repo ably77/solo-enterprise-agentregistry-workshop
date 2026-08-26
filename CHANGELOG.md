@@ -1,5 +1,16 @@
 # Changelog
 
+0.1.7 - (8-26-26)
+---
+- Upgrade to Agentregistry Enterprise + `arctl` `v2026.8.0` (chart `2026.8.0`) across the install lab, air-gap lab, image/mirror lists, and `e2e-test.sh`
+- Update Enterprise Agentgateway to `v2026.7.1-patch.1` across the install lab, air-gap lab, image lists, `mirror-images.sh`, and `e2e-test.sh`
+- **Model migration (v2026.8.0 breaking change)** — `Agent.spec.modelProvider/modelName` → catalog `Model` + `Deployment.spec.modelRef`:
+  - New `assets/models/default.yaml` (`Model/default@latest`, Bedrock `us.anthropic.claude-sonnet-4-6`, `auth.strategy: runtime`), published in a new Part 3 section 1 and referenced via `modelRef` by every AgentCore Deployment (Parts 3–5, `e2e/agentcore.sh`); teardown added to `agentcore-cleanup.md` and the e2e cleanup
+  - Deprecated model fields removed from the four bedrock agents' `agent.yaml` and from the approval-workflow demo agents (lab + e2e); `arctl.yaml` scaffold records are untouched (they mirror `arctl init` flags, not the catalog schema)
+  - `econresearch-agw` (Part 5, OpenAI via LiteLLM/Agentgateway) keeps the deprecated fields for the one-release compat window — `Model` supports only the `bedrock` provider in `v2026.8.0` — with a callout; its Deployment satisfies the required `modelRef` with the `default` Model
+- Built-in runtimes: `v2026.8.0` ships only `virtual-default` (the local/Docker **and** legacy Kubernetes runtimes are gone) — dropped both assertions from `e2e-test.sh` and updated expected output
+- Prose pass over all workshop docs
+
 0.1.6 - (7-20-26)
 ---
 - Fix to `agentcore` module of the `./e2e-test.sh` - detect keycloak endpoint in realtime

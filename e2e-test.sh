@@ -45,9 +45,9 @@
 set -uo pipefail
 
 # ---------- pinned versions --------------------------------------------------
-ARCTL_VERSION="${ARCTL_VERSION:-v2026.7.0}"
-ARE_HELM_VERSION="${ARE_HELM_VERSION:-2026.7.0}"
-AGW_VERSION="${AGW_VERSION:-v2026.6.3}"
+ARCTL_VERSION="${ARCTL_VERSION:-v2026.8.0}"
+ARE_HELM_VERSION="${ARE_HELM_VERSION:-2026.8.0}"
+AGW_VERSION="${AGW_VERSION:-v2026.7.1-patch.1}"
 GW_API_VERSION="${GW_API_VERSION:-v1.5.0}"
 
 # ---------- config -----------------------------------------------------------
@@ -227,7 +227,7 @@ install_agentregistry() {
   step "helm install agentregistry-enterprise ${ARE_HELM_VERSION}"
   cat > /tmp/are-values.yaml <<EOF
 image:
-  tag: v2026.7.0
+  tag: v2026.8.0
 service:
   type: LoadBalancer
 oidc:
@@ -370,14 +370,13 @@ verify_baseline() {
   step "Built-in runtimes"
   local rt; rt=$(_arctl get runtimes 2>/dev/null)
   assert_contains "virtual-default runtime present" "virtual-default" "$rt"
-  assert_contains "kubernetes-default runtime present" "kubernetes-default" "$rt"
-  assert_contains "local runtime present" "local" "$rt"
+  # virtual-default is the only built-in runtime
 
   step "Server version populated"
   # The running pod image tag is the authoritative version signal. The server's
   # self-reported build metadata is informational only: published images don't
-  # always stamp it (e.g. the v2026.7.0 image reports "dev"/"unknown"), so
-  # asserting on it produces false failures even when the correct image is live.
+  # always stamp it (some report "dev"/"unknown"), so asserting on it produces
+  # false failures even when the correct image is live.
   local simg; simg=$(kubectl get deploy agentregistry-enterprise-server -n agentregistry-system \
     -o jsonpath='{.spec.template.spec.containers[*].image}' 2>/dev/null)
   assert_contains "server image tag ${ARE_HELM_VERSION}" "$ARE_HELM_VERSION" "$simg"
@@ -839,8 +838,6 @@ metadata:
 spec:
   title: approval-test-agent
   description: "Test agent for approval workflow validation"
-  modelProvider: anthropic
-  modelName: claude-sonnet-4-6
   source:
     image: docker.io/python:3.13-slim
 EOF

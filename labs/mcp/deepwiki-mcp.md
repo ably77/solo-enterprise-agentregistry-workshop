@@ -1,6 +1,6 @@
 # DeepWiki MCP through Agentgateway
 
-A second public, remote MCP example alongside [Solo Docs](solo-docs-mcp.md) — **DeepWiki**
+A second public, remote MCP example alongside [Solo Docs](solo-docs-mcp.md): **DeepWiki**
 (`https://mcp.deepwiki.com/mcp`), which answers questions about public GitHub repositories. Same
 gateway-fronted pattern, no token required. This lab is intentionally short; see the
 [Solo Docs lab](solo-docs-mcp.md) for the full explanation of each step.
@@ -28,8 +28,8 @@ export ARCTL_API_BASE_URL="http://${AR_IP}:12121"
 
 ## 1. Parent Gateway (shared)
 
-One parent Gateway fronts many MCPs at different path suffixes. Apply it if you haven't (e.g. you
-ran the Solo Docs lab and left it up — then skip this):
+One parent Gateway fronts many MCPs at different path suffixes. Apply it if you haven't; skip this
+if you ran the Solo Docs lab and left it up:
 
 ```bash
 cat assets/mcp/agentgateway/parent-gateway-and-route.yaml
@@ -49,7 +49,7 @@ arctl get deployment deepwiki-remote-mcp-agw -o yaml | grep -E "reason:|url:"
 ```
 
 Expect `reason: DeployedViaAgentgateway` and `url: http://<gateway-address>/registry/deepwiki`.
-(If it's stuck at `NoAcceptedListener`, the Gateway wasn't programmed yet — `arctl delete` the
+(If it's stuck at `NoAcceptedListener`, the Gateway wasn't programmed yet: `arctl delete` the
 deployment and re-apply.)
 
 ## 3. Call It
@@ -91,11 +91,11 @@ curl -s -X POST "${H[@]}" \
 
 You get an AI-generated answer sourced from the repo's docs, served through the gateway. (If you ask
 about a repo DeepWiki hasn't indexed, the tool returns `Repository not found. Visit
-https://deepwiki.com to index it.` — that's a valid response from the upstream, proving the gateway
-path works.)
+https://deepwiki.com to index it.` That's still a valid response from the upstream, proving the
+gateway path works.)
 
 > **Two MCPs, one gateway.** If you also ran the Solo Docs lab, both are now live on the same
-> Gateway LB at different paths — `/registry/solo-docs` and `/registry/deepwiki`. That's the
+> Gateway LB at different paths: `/registry/solo-docs` and `/registry/deepwiki`. That's the
 > Virtual-runtime pattern: one endpoint, many catalog-published MCP backends.
 
 ## Cleanup

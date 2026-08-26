@@ -1,4 +1,4 @@
-# AccessPolicy — RBAC for the Catalog
+# AccessPolicy: RBAC for the Catalog
 
 Agentregistry Enterprise enforces RBAC with `AccessPolicy` resources that map an OIDC principal (a
 Keycloak group, an Entra group object ID, or a `Deployment` identity) to a set of actions on catalog
@@ -41,7 +41,7 @@ export KC_IP=$(kubectl get svc keycloak -n keycloak \
 > principal must be `are-readers` - **not** the group's GUID. A policy that uses the GUID is accepted
 > and listed, but silently matches nothing.
 
-## 1. Baseline — `reader` Sees Nothing
+## 1. Baseline: `reader` Sees Nothing
 
 `reader` is in `are-readers` (not a superuser, no policy yet). Act as `reader` non-interactively by
 putting their token in `ARCTL_API_TOKEN`:

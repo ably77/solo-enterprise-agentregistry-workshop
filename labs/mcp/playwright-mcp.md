@@ -141,9 +141,9 @@ await page.goto('https://example.com');
 ...
 ```
 
-That round trip - laptop spawns the npm package, drives a headless browser, returns the page - is
-the whole point: the catalog told you exactly what to run, and the server runs wherever you (or an
-agent) spawn it.
+That round trip (laptop spawns the npm package, drives a headless browser, returns the page)
+demonstrates the model: the catalog told you exactly what to run, and the server runs wherever you
+(or an agent) spawn it.
 
 ## How an Agent Uses It
 
