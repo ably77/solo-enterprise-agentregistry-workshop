@@ -178,6 +178,6 @@ Operator AWS credentials never go in `./secrets`; keep them ambient (`aws config
 ## Validated On
 
 - Agentregistry Enterprise + `arctl` `v2026.8.0`
-- Enterprise Agentgateway `v2026.6.3`
+- Enterprise Agentgateway `v2026.7.1-patch.1`
 - Keycloak `quay.io/keycloak/keycloak:26.0`
 - Kubernetes 1.29+

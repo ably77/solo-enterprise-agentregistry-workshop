@@ -2,7 +2,8 @@
 
 0.1.7 - (8-26-26)
 ---
-- Upgrade to Agentregistry Enterprise + `arctl` `v2026.8.0` (chart `2026.8.0`) across the install lab, air-gap lab, image/mirror lists, and `e2e-test.sh`; Enterprise Agentgateway stays `v2026.6.3` (no new release)
+- Upgrade to Agentregistry Enterprise + `arctl` `v2026.8.0` (chart `2026.8.0`) across the install lab, air-gap lab, image/mirror lists, and `e2e-test.sh`
+- Update Enterprise Agentgateway to `v2026.7.1-patch.1` across the install lab, air-gap lab, image lists, `mirror-images.sh`, and `e2e-test.sh`
 - **Model migration (v2026.8.0 breaking change)** — `Agent.spec.modelProvider/modelName` → catalog `Model` + `Deployment.spec.modelRef`:
   - New `assets/models/default.yaml` (`Model/default@latest`, Bedrock `us.anthropic.claude-sonnet-4-6`, `auth.strategy: runtime`), published in a new Part 3 section 1 and referenced via `modelRef` by every AgentCore Deployment (Parts 3–5, `e2e/agentcore.sh`); teardown added to `agentcore-cleanup.md` and the e2e cleanup
   - Deprecated model fields removed from the four bedrock agents' `agent.yaml` and from the approval-workflow demo agents (lab + e2e); `arctl.yaml` scaffold records are untouched (they mirror `arctl init` flags, not the catalog schema)

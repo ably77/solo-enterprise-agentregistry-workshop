@@ -283,13 +283,13 @@ kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/downloa
 # Agentgateway CRDs
 helm upgrade --install agentgateway-crds \
   oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway-crds \
-  --version v2026.6.3 \
+  --version v2026.7.1-patch.1 \
   --namespace agentgateway-system --create-namespace
 
 # Agentgateway controller
 helm upgrade --install enterprise-agentgateway \
   oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway \
-  --version v2026.6.3 \
+  --version v2026.7.1-patch.1 \
   --namespace agentgateway-system \
   --set-string licensing.licenseKey="${SOLO_TRIAL_LICENSE_KEY}"
 ```

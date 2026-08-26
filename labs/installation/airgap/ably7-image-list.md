@@ -27,8 +27,8 @@ Docker Hub uses a flat `namespace/repo` layout, so charts mirror to top-level re
 
 ```
 oci://docker.io/ably7/agentregistry-enterprise:2026.8.0
-oci://docker.io/ably7/enterprise-agentgateway-crds:v2026.6.3
-oci://docker.io/ably7/enterprise-agentgateway:v2026.6.3
+oci://docker.io/ably7/enterprise-agentgateway-crds:v2026.7.1-patch.1
+oci://docker.io/ably7/enterprise-agentgateway:v2026.7.1-patch.1
 ```
 
 ## OIDC: Keycloak
@@ -59,16 +59,16 @@ docker.io/ably7/clickhouse-server:26.2.5-alpine
 docker.io/ably7/opentelemetry-collector-contrib:0.148.0
 ```
 
-## Enterprise Agentgateway (v2026.6.3)
+## Enterprise Agentgateway (v2026.7.1-patch.1)
 
 ### controller
 ```
-docker.io/ably7/enterprise-agentgateway-controller:2026.6.3
+docker.io/ably7/enterprise-agentgateway-controller:2026.7.1-patch.1
 ```
 
 ### agentgateway proxy
 ```
-docker.io/ably7/agentgateway-enterprise:2026.6.3
+docker.io/ably7/agentgateway-enterprise:2026.7.1-patch.1
 ```
 
 > Shared extensions (`ext-auth-service`, `rate-limiter`, `redis`) are not enabled by this workshop, so

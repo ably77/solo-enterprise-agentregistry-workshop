@@ -2,7 +2,7 @@
 
 Every artifact the baseline pulls. Mirror all of these into your private registry / internal artifact
 host before running the [air-gap install lab](airgap/001-airgap.md). Tags below are the validated
-companions for **Agentregistry Enterprise `v2026.8.0`** + **Enterprise Agentgateway `v2026.6.3`**.
+companions for **Agentregistry Enterprise `v2026.8.0`** + **Enterprise Agentgateway `v2026.7.1-patch.1`**.
 
 > **Mirror it automatically:** [`mirror-images.sh`](mirror-images.sh) copies every image and chart
 > below into your registry (default `docker.io/ably7`) with `docker buildx imagetools create` (full
@@ -52,8 +52,8 @@ helm pull oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agen
 ### Enterprise Agentgateway CRDs + chart
 
 ```bash
-helm pull oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway-crds --version v2026.6.3
-helm pull oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway --version v2026.6.3
+helm pull oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway-crds --version v2026.7.1-patch.1
+helm pull oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway --version v2026.7.1-patch.1
 ```
 
 ## Images
@@ -77,15 +77,15 @@ docker.io/clickhouse/clickhouse-server:26.2.5-alpine
 docker.io/otel/opentelemetry-collector-contrib:0.148.0
 ```
 
-### Enterprise Agentgateway (chart `v2026.6.3`)
+### Enterprise Agentgateway (chart `v2026.7.1-patch.1`)
 
 ```bash
-us-docker.pkg.dev/solo-public/enterprise-agentgateway/enterprise-agentgateway-controller:2026.6.3
-us-docker.pkg.dev/solo-public/enterprise-agentgateway/agentgateway-enterprise:2026.6.3
+us-docker.pkg.dev/solo-public/enterprise-agentgateway/enterprise-agentgateway-controller:2026.7.1-patch.1
+us-docker.pkg.dev/solo-public/enterprise-agentgateway/agentgateway-enterprise:2026.7.1-patch.1
 ```
 
 > The shared extensions (`ext-auth-service`, `rate-limiter`, `ext-cache`/`redis`) are also published
-> under `us-docker.pkg.dev/solo-public/enterprise-agentgateway/<name>:2026.6.3`, but this workshop
+> under `us-docker.pkg.dev/solo-public/enterprise-agentgateway/<name>:2026.7.1-patch.1`, but this workshop
 > doesn't enable them, so they aren't part of the baseline mirror. Add them if you turn them on.
 
 > **Third-party MCP images:** the MCP labs that self-host a server in-cluster (e.g. the arXiv / FRED /

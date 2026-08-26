@@ -61,7 +61,7 @@ export BINARY_BUCKET=agentregistry-enterprise
 # --- Pinned versions (match what you mirrored) ---
 export ARCTL_VERSION=v2026.8.0
 export ARE_VERSION=2026.8.0            # Agentregistry Enterprise chart + image
-export ENTERPRISE_AGW_VERSION=v2026.6.3
+export ENTERPRISE_AGW_VERSION=v2026.7.1-patch.1
 
 # --- Optional: name of a pull Secret you created in each namespace ---
 # export IMAGE_PULL_SECRET=my-registry-secret
@@ -409,7 +409,7 @@ echo "Agentregistry API + UI: ${ARCTL_API_BASE_URL}"
 
 Required for the MCP-through-gateway labs. A single top-level `image.registry` override covers the
 chart-managed images this workshop uses: the controller and the agentgateway proxy (provisioned when
-a Gateway is created). They inherit the registry and are pinned to the chart-version tag (`2026.6.3`),
+a Gateway is created). They inherit the registry and are pinned to the chart-version tag (`2026.7.1-patch.1`),
 matching the mirrored tags in [`ably7-image-list.md`](ably7-image-list.md).
 
 > The chart can also auto-provision shared extensions (`ext-auth-service`, `rate-limiter`,

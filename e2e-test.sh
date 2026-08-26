@@ -47,7 +47,7 @@ set -uo pipefail
 # ---------- pinned versions --------------------------------------------------
 ARCTL_VERSION="${ARCTL_VERSION:-v2026.8.0}"
 ARE_HELM_VERSION="${ARE_HELM_VERSION:-2026.8.0}"
-AGW_VERSION="${AGW_VERSION:-v2026.6.3}"
+AGW_VERSION="${AGW_VERSION:-v2026.7.1-patch.1}"
 GW_API_VERSION="${GW_API_VERSION:-v1.5.0}"
 
 # ---------- config -----------------------------------------------------------
