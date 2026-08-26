@@ -49,7 +49,7 @@ token_for() {
 ```bash
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.7.0 \
+  --version 2026.8.0 \
   --namespace agentregistry-system \
   --reuse-values \
   --set config.requireCreateApproval=true
@@ -107,8 +107,6 @@ metadata:
 spec:
   title: approval-test-agent
   description: "Test agent for approval workflow validation"
-  modelProvider: anthropic
-  modelName: claude-sonnet-4-6
   source:
     image: docker.io/python:3.13-slim
 EOF
@@ -195,7 +193,7 @@ arctl delete accesspolicy are-readers-catalog-write 2>/dev/null || true
 # disable the flag (does not retroactively release queued requests; reject those first)
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.7.0 \
+  --version 2026.8.0 \
   --namespace agentregistry-system \
   --reuse-values \
   --set config.requireCreateApproval=false

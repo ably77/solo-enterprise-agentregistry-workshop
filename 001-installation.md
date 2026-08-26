@@ -58,7 +58,7 @@ If `EXTERNAL-IP` stays `<pending>`, install/fix your LoadBalancer provider befor
 ## 2. Install the `arctl` CLI
 
 ```bash
-export ARCTL_VERSION=v2026.7.0
+export ARCTL_VERSION=v2026.8.0
 curl -sSL https://storage.googleapis.com/agentregistry-enterprise/install.sh \
   | ARCTL_VERSION=$ARCTL_VERSION sh
 export PATH=$HOME/.arctl/bin:$PATH
@@ -76,7 +76,7 @@ Expected (server is empty until step 4 - that's fine):
 ```json
 {
   "cli": {
-    "version": "v2026.7.0",
+    "version": "v2026.8.0",
     "git_commit": "...",
     "build_time": "..."
   }
@@ -196,7 +196,7 @@ group **name** in the `groups` claim (Keycloak emits names, not GUIDs).
 ```bash
 cat > /tmp/are-values.yaml <<EOF
 image:
-  tag: v2026.7.0
+  tag: v2026.8.0
 service:
   type: LoadBalancer
 oidc:
@@ -223,7 +223,7 @@ EOF
 
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.7.0 \
+  --version 2026.8.0 \
   --namespace agentregistry-system \
   -f /tmp/are-values.yaml \
   --wait --timeout 5m
@@ -340,15 +340,13 @@ success page you can close:
 Confirm the baseline works:
 
 ```bash
-# 3 built-in runtimes ship out of the box
+# the virtual-default runtime ships out of the box
 arctl get runtimes
 ```
 
 ```
-NAME                 TYPE
-kubernetes-default   Kubernetes
-local                Local
-virtual-default      Virtual
+NAME              TYPE
+virtual-default   Virtual
 ```
 
 ```bash
@@ -357,7 +355,7 @@ arctl version --json
 ```
 
 ```json
-{ "cli": { "version": "v2026.7.0", ... }, "server": { "version": "v2026.7.0", ... } }
+{ "cli": { "version": "v2026.8.0", ... }, "server": { "version": "v2026.8.0", ... } }
 ```
 
 > **Confirm admin privileges.** Your `admin` user should be a superuser. The most reliable check is

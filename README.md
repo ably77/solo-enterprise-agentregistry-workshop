@@ -73,7 +73,7 @@ A five-part **AWS Bedrock AgentCore** series (requires an AWS account you can ad
 
 - [Part 1 — Integrate Agentregistry and AgentCore](labs/runtimes/agentcore-01-integration.md) — build the AWS side from zero (CLI, operator auth, Bedrock model availability), grant the registry AWS access, generate the cross-account IAM role via `arctl runtime setup` + CloudFormation, and register the `agentcore` Runtime
 - [Part 2 — Create Agents](labs/runtimes/agentcore-02-create-agents.md) — how the four vertical-use-case agents were built: the `arctl init agent` ADK/Bedrock scaffold, one customized `agent.py` (snapshot data + function tools + grounding instruction), and the Git-sourced catalog entry — all four already checked in under `assets/agents/` (no AWS needed)
-- [Part 3 — Register and Deploy Agents to AgentCore](labs/runtimes/agentcore-03-deploy-agents.md) — publish `econresearch` (a Bedrock Claude-backed economic research agent) to the catalog, deploy it to AgentCore, chat from the UI and tail CloudWatch — then deploy [`claimsupport`](assets/agents/claimsupport/) and [`bankingsupport`](assets/agents/bankingsupport/) the same way
+- [Part 3 — Register and Deploy Agents to AgentCore](labs/runtimes/agentcore-03-deploy-agents.md) — publish the workshop's governed [`Model`](assets/models/default.yaml) (Bedrock Claude, referenced by every deploy via `modelRef`) and `econresearch` (an economic research agent) to the catalog, deploy it to AgentCore, chat from the UI and tail CloudWatch — then deploy [`claimsupport`](assets/agents/claimsupport/) and [`bankingsupport`](assets/agents/bankingsupport/) the same way
 - [Part 4 — Approval-Gated Agent Onboarding](labs/runtimes/agentcore-04-approval-onboarding.md) — onboard the fourth agent, [`ithelpdesk`](assets/agents/ithelpdesk/), the governed way: `requireCreateApproval` on, submitted by the non-admin `reader`, staged in the Administrative Requests queue — deploys are blocked until an admin approves — then deployed to AgentCore
 - [Part 5 — Route LLM and Registry-Managed MCP Through Agentgateway](labs/runtimes/agentcore-05-agentgateway-llm-mcp.md) — extend `econresearch` into [`econresearch-agw`](assets/agents/econresearch-agw/): OpenAI (`gpt-5.4-nano`) LLM calls through an Agentgateway `/openai` route (key held in a k8s Secret at the gateway) and live FRED data via the FRED MCP server at `/registry/fred`, both planes on one gateway (requires a publicly reachable gateway LB)
 - [Cleanup](labs/runtimes/agentcore-cleanup.md) — consolidated teardown for all five parts, in dependency order (deployments/catalog entries first, the AWS/IAM integration last)
@@ -137,6 +137,7 @@ fe-enterprise-agentregistry-workshop/
 │   ├── keycloak/                        # kustomize stack: deployment + agentregistry-enterprise.json (--import-realm)
 │   ├── prompts/                         # Prompt manifest
 │   ├── skills/                          # field-rfe + changelog SKILL.md (publishable skill sources)
+│   ├── models/                          # default.yaml — the governed Bedrock Claude Model (deploys reference it via modelRef)
 │   ├── agents/                          # four ADK/Bedrock example agents (Git source):
 │   │   └── ...                          #   econresearch, claimsupport, bankingsupport, ithelpdesk
 │   ├── runtimes/
@@ -176,7 +177,7 @@ Operator AWS credentials never go in `./secrets` — keep them ambient (`aws con
 
 ## Validated On
 
-- Agentregistry Enterprise + `arctl` `v2026.7.0`
+- Agentregistry Enterprise + `arctl` `v2026.8.0`
 - Enterprise Agentgateway `v2026.6.3`
 - Keycloak `quay.io/keycloak/keycloak:26.0`
 - Kubernetes 1.29+

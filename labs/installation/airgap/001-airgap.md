@@ -59,8 +59,8 @@ export BINARY_HOST=http://artifacts.internal.example.com
 export BINARY_BUCKET=agentregistry-enterprise
 
 # --- Pinned versions (match what you mirrored) ---
-export ARCTL_VERSION=v2026.7.0
-export ARE_VERSION=2026.7.0            # Agentregistry Enterprise chart + image
+export ARCTL_VERSION=v2026.8.0
+export ARE_VERSION=2026.8.0            # Agentregistry Enterprise chart + image
 export ENTERPRISE_AGW_VERSION=v2026.6.3
 
 # --- Optional: name of a pull Secret you created in each namespace ---
@@ -142,7 +142,7 @@ Expected (server is empty until step 4 — that's fine):
 ```json
 {
   "cli": {
-    "version": "v2026.7.0",
+    "version": "v2026.8.0",
     "git_commit": "...",
     "build_time": "..."
   }
@@ -496,15 +496,13 @@ prints `token stored in keychain successfully`.
 Confirm the baseline works:
 
 ```bash
-# 3 built-in runtimes ship out of the box
+# the virtual-default runtime ships out of the box
 arctl get runtimes
 ```
 
 ```
-NAME                 TYPE
-kubernetes-default   Kubernetes
-local                Local
-virtual-default      Virtual
+NAME              TYPE
+virtual-default   Virtual
 ```
 
 ```bash
@@ -516,7 +514,7 @@ reports its own build metadata — currently `dev`/`unknown` — rather than the
 matters is that the `server` object is present, not the exact string.)
 
 ```json
-{ "cli": { "version": "v2026.7.0", ... }, "server": { "version": "dev", "git_commit": "unknown", ... } }
+{ "cli": { "version": "v2026.8.0", ... }, "server": { "version": "dev", "git_commit": "unknown", ... } }
 ```
 
 > **Confirm admin privileges.** Your `admin` user should be a superuser. The most reliable check is

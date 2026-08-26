@@ -266,13 +266,22 @@ section 1.1; this entry only names where agents should call.
 
 > **Why not `deploymentRefs`?** You might expect to link the agent deployment to
 > `fred-incluster-agw` via `spec.deploymentRefs` and let the registry resolve the gateway URL.
-> As of `v2026.7.0` the registry rejects that with `ErrMCPSetMismatch`: its set-equality
+> The registry rejects that with `ErrMCPSetMismatch`: its set-equality
 > validation excludes *remote* MCPServers (like `fred-incluster-mcp`, registered by URL) from
 > the set `deploymentRefs` may wire, so the ref is treated as an extra. Until that's relaxed
 > upstream, the agent-facing catalog entry above is the working pattern; the trade-off is that
 > your gateway address lives in a catalog entry you create per-environment.
 
 ### 4.2 Publish and deploy the agent
+
+> **Model note.** This agent is the one place the workshop uses the deprecated
+> `Agent.spec.modelProvider`/`modelName` fields: the `Model` catalog resource supports only the
+> `bedrock` provider today, and `econresearch-agw` calls **OpenAI** through the gateway. Expect a
+> warning on apply (`uses deprecated spec.modelProvider/modelName; the values are preserved for
+> compatibility only and do not select a runtime model`). Because AgentCore deployments require
+> `spec.modelRef`, the Deployment below references the workshop's `default` Bedrock Model to
+> satisfy the harness — the agent's actual LLM traffic still goes to OpenAI via LiteLLM through
+> the Agentgateway `/openai` route.
 
 ```bash
 arctl apply -f assets/agents/econresearch-agw/agent.yaml
@@ -290,6 +299,9 @@ spec:
   runtimeRef:
     kind: Runtime
     name: agentcore
+  modelRef:
+    name: default
+    tag: latest
   runtimeConfig:
     region: ${AWS_REGION}
     workdir: assets/agents/econresearch-agw

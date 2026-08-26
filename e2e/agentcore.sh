@@ -206,7 +206,7 @@ agentcore_integration() {
         fail "arctl runtime setup produced no CloudFormation template ($(head -1 /tmp/agentcore-rtsetup.err 2>/dev/null))"
         return 1
       fi
-      # v2026.7.0 trusts the account root gated by ExternalId (covers any
+      # the generated template trusts the account root gated by ExternalId (covers any
       # principal); older/newer shapes naming the literal default user get the
       # lab's sed patch so AssumeRole trusts our prefixed deployer
       if grep -qE 'arn:aws:iam::[0-9]+:root' /tmp/agentregistry-cf.yaml; then
@@ -281,6 +281,15 @@ agentcore_deploy() {
   phase "AgentCore Phase 2 — Deploy econresearch"
   AGENTCORE_RAN=1
 
+  step "Publish the workshop Model (AgentCore deploys require modelRef)"
+  if [[ "${AWS_REGION}" != "us-east-1" ]]; then
+    sed "s/region: us-east-1/region: ${AWS_REGION}/" assets/models/default.yaml > /tmp/agentcore-model.yaml
+  else
+    cp assets/models/default.yaml /tmp/agentcore-model.yaml
+  fi
+  assert "arctl apply Model default" _arctl apply -f /tmp/agentcore-model.yaml || return 1
+  assert_contains "default in models" "default" "$(_arctl get models 2>/dev/null)"
+
   step "Publish econresearch to the catalog"
   assert "arctl apply agent.yaml" _arctl apply -f assets/agents/econresearch/agent.yaml || return 1
   assert_contains "econresearch in agents" "econresearch" "$(_arctl get agents 2>/dev/null)"
@@ -299,6 +308,9 @@ spec:
   runtimeRef:
     kind: Runtime
     name: agentcore
+  modelRef:
+    name: default
+    tag: latest
   runtimeConfig:
     region: ${AWS_REGION}
     workdir: assets/agents/econresearch
@@ -428,6 +440,9 @@ spec:
   runtimeRef:
     kind: Runtime
     name: agentcore
+  modelRef:
+    name: default
+    tag: latest
   runtimeConfig:
     region: ${AWS_REGION}
     workdir: assets/agents/ithelpdesk
@@ -558,6 +573,8 @@ agentcore_cleanup() {
   fi
   _arctl delete agent ithelpdesk --tag 1.0.0 >/dev/null 2>&1 \
     && info "deleted agent ithelpdesk" || info "agent ithelpdesk already gone"
+  _arctl delete model default --tag latest >/dev/null 2>&1 \
+    && info "deleted model default" || info "model default already gone"
   _arctl delete runtime agentcore >/dev/null 2>&1 \
     && info "deleted runtime agentcore" || info "runtime agentcore already gone"
   if _agentcore_dep_gone econresearch && _agentcore_dep_gone ithelpdesk \

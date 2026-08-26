@@ -130,8 +130,6 @@ metadata:
   tag: "1.0.0"
 spec:
   description: "Economic research assistant for financial services teams - ..."
-  modelName: us.anthropic.claude-sonnet-4-6
-  modelProvider: bedrock
   source:
     image: localhost:5001/econresearch:latest
     repository:
@@ -139,6 +137,13 @@ spec:
       branch: "main"
       subfolder: "assets/agents/econresearch"
 ```
+
+Notice there are **no model fields** on the Agent: model choice is a deploy-time decision — a
+`kind: Model` catalog resource referenced by the Deployment's `spec.modelRef`
+([Part 3 section 1](agentcore-03-deploy-agents.md) publishes the workshop's Bedrock Claude
+`Model`). The scaffold's model flags above still shape the generated *code*
+(`bedrock_model.py` and the model id in `agent.py`), but the catalog entry no longer duplicates
+them.
 
 The important field is `spec.source.repository`: the catalog entry contains no code and no
 pre-built image, only a pointer to a **Git URL + branch + subfolder**. At deploy time,

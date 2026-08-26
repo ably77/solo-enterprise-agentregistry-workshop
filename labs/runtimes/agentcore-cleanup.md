@@ -55,7 +55,7 @@ arctl delete agent ithelpdesk --tag 1.0.0
 arctl delete accesspolicy are-readers-agent-onboarding 2>/dev/null || true
 helm upgrade --install agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.7.0 \
+  --version 2026.8.0 \
   --namespace agentregistry-system \
   --reuse-values \
   --set config.requireCreateApproval=false
@@ -74,6 +74,9 @@ arctl delete deployment claimsupport
 arctl delete agent claimsupport --tag 1.0.0
 arctl delete deployment bankingsupport
 arctl delete agent bankingsupport --tag 1.0.0
+
+# last — every Part 3-5 Deployment references this Model
+arctl delete model default --tag latest
 ```
 
 > AgentCore also leaves behind each runtime's CloudWatch log group; remove them with
@@ -130,7 +133,7 @@ aws iam delete-policy \
 # if /tmp/are-values.yaml is gone, recreate it from 001 step 4 first)
 helm upgrade agentregistry-enterprise \
   oci://us-docker.pkg.dev/solo-public/agentregistry-enterprise/helm/agentregistry-enterprise \
-  --version 2026.7.0 \
+  --version 2026.8.0 \
   --namespace agentregistry-system \
   -f /tmp/are-values.yaml \
   --wait --timeout 5m
@@ -143,11 +146,11 @@ unset AWS_ACCOUNT_ID AWS_REGION AWS_ROLE_ARN AWS_EXTERNAL_ID AR_AWS_ACCESS_KEY_I
 unset AR_USER_PREFIX AR_DEPLOYER_USER AR_STACK_NAME AR_ROLE_NAME
 ```
 
-> **Shared AWS account, or cleaning up an older install?** As of this revision, Part 1 prefixes
-> every fixed name with `AR_USER_PREFIX` (`$(whoami)`), so two people in the same AWS account get
-> `alice-agentregistry-deployer` and `bob-agentregistry-deployer` instead of colliding on one
-> `agentregistry-deployer`. If you (or a teammate) set this up **before** that change, the
-> unprefixed names may still exist and may be shared — before deleting anything named exactly
+> **Shared AWS account?** Part 1 prefixes every fixed name with `AR_USER_PREFIX` (`$(whoami)`),
+> so two people in the same AWS account get `alice-agentregistry-deployer` and
+> `bob-agentregistry-deployer` instead of colliding on one `agentregistry-deployer`. If the
+> account also carries **unprefixed** resources (e.g. from a teammate's setup outside this
+> workshop), they may be shared — before deleting anything named exactly
 > `agentregistry-deployer`, `AgentRegistryGeneralAccess`,
 `AgentRegistryBedrockAgentCoreAccess`/`Part1`/`Part2`, or
 > `agentregistry-access-role` (no prefix), confirm with whoever else might have a `Runtime`

@@ -13,8 +13,6 @@ metadata:
   tag: "1.0.0"
 spec:
   description: "Personal banking support assistant - account summary and recent transaction lookups (balance, status, transaction history) from a curated snapshot"
-  modelName: us.anthropic.claude-sonnet-4-6
-  modelProvider: bedrock
   source:
     image: localhost:5001/bankingsupport:latest
     repository:
