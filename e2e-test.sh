@@ -93,6 +93,15 @@ poll() {
 
 require_cmd() { command -v "$1" >/dev/null 2>&1; }
 
+# Real Ready condition (confirmed live): a single status.conditions entry,
+# type: Ready, reason: Resolved, status: "True" once the source resolves (seconds,
+# not the Progressing/SourceUnresolvable states seen while unresolved).
+_plugin_ready() {
+  local y; y=$(_arctl get plugin "$1" --tag "${2:-1.0.0}" -o yaml 2>/dev/null)
+  printf '%s' "$y" | grep -q 'reason: Resolved' && printf '%s' "$y" | grep -q 'status: "True"'
+}
+_plugin_absent_from_feed() { ! curl -s "http://${AR_IP}:12121/plugin-marketplace/marketplace.json" | grep -q workshop-toolkit; }
+
 # _jwt_claim <jwt> <jq-filter> : decode JWT payload (base64url, padded) and run jq
 _jwt_claim() {
   local payload; payload=$(printf '%s' "$1" | cut -d. -f2 | tr '_-' '/+')
@@ -729,6 +738,58 @@ EOF
   # skills as fixtures to prove a reader gains skill visibility after a grant.
 }
 
+lab_plugin_marketplace() {
+  phase "Lab — Plugin + Claude Code marketplace (catalog)"
+  step "Publish workshop-toolkit plugin (tag 1.0.0)"
+  assert "apply workshop-toolkit plugin.yaml" _arctl apply -f assets/plugins/workshop-toolkit/plugin.yaml
+  local p; p=$(_arctl get plugins 2>/dev/null)
+  assert_contains "plugin shows in listing" "workshop-toolkit" "$p"
+
+  # Ready depends on the bundle being reachable in the source repo; poll but SKIP
+  # (not FAIL) if unpublished content keeps it not-Ready, same stance as the
+  # skills labs' best-effort arctl pull.
+  step "Wait for plugin Ready (best-effort)"
+  if poll 60 5 _plugin_ready workshop-toolkit 1.0.0; then
+    pass "plugin reached Ready (reason: Resolved)"
+  else
+    skip "plugin not Ready (bundle likely not pushed/resolvable yet); skipping marketplace assertions"
+    _arctl delete plugin workshop-toolkit --all-tags >/dev/null 2>&1 || true
+    return 0
+  fi
+
+  step "Enable marketplace flag + fetch feed"
+  kubectl set env deployment/agentregistry-enterprise-server -n agentregistry-system \
+    AGENT_REGISTRY_PLUGIN_MARKETPLACE_COMPAT_ENABLED=true >/dev/null
+  kubectl rollout status deployment/agentregistry-enterprise-server -n agentregistry-system --timeout=120s >/dev/null
+  local feed; feed=$(curl -s "http://${AR_IP}:12121/plugin-marketplace/marketplace.json")
+  local feed_populated=0
+  # The route registers and serves valid marketplace JSON (the flag needs the
+  # AGENT_REGISTRY_ prefix; the bare name from the release notes is ignored).
+  assert_contains "marketplace.json is a marketplace document" "claude-code-marketplace" "$feed"
+  # TODO(v2026.8.0 bug): the feed's plugins array is always [] on this build;
+  # the route skips the auth middleware, so the RBAC list filter evaluates every
+  # request as anonymous and matches nothing. Soft-skip the content assertions
+  # until a fixed build ships; this block then starts asserting for free.
+  if printf '%s' "$feed" | jq -e '.plugins | length > 0' >/dev/null 2>&1; then
+    feed_populated=1
+    assert_contains "marketplace.json lists workshop-toolkit" "workshop-toolkit" "$feed"
+  else
+    skip "marketplace.json content assertions (known v2026.8.0 bug: feed plugins list always empty; unauthenticated route + RBAC filter)"
+  fi
+
+  step "Cleanup plugin + feed entry"
+  _arctl delete plugin workshop-toolkit --all-tags >/dev/null 2>&1 || true
+  if [ "$feed_populated" = 1 ]; then
+    if poll 30 3 _plugin_absent_from_feed; then
+      pass "feed entry removed after delete"
+    else
+      fail "workshop-toolkit still in marketplace.json after delete"
+    fi
+  else
+    skip "feed entry removal check (known v2026.8.0 bug: feed plugins list always empty)"
+  fi
+}
+
 lab_access_policies() {
   phase "Lab — AccessPolicy / RBAC"
   # ensure there is at least one catalog asset (demo-tools registered earlier)
@@ -946,6 +1007,7 @@ run_labs() {
   lab_prompts
   lab_skills
   lab_changelog_skill
+  lab_plugin_marketplace
   lab_access_policies
   lab_approval
 }

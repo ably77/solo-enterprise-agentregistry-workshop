@@ -56,3 +56,6 @@ temp/
 # Design specs / implementation plans (working docs, not workshop content)
 /docs/
 .worktrees/
+
+# Internal working notes (release-gated follow-ups)
+/PARKING-LOT.md

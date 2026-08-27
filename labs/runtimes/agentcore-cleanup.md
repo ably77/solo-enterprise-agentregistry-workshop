@@ -6,16 +6,91 @@
 > [Part 3: Register and Deploy Agents to AgentCore](agentcore-03-deploy-agents.md) ·
 > [Part 4: Approval-Gated Agent Onboarding](agentcore-04-approval-onboarding.md) ·
 > [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md) ·
+> [Part 6: Gateway-Bound Runtime: Policy Enforcement and Tracing](agentcore-06-gateway-policy-tracing.md) ·
 > **Cleanup** (this doc)
 
 Every teardown step for the series, in one place. Run the sections below **top to bottom**, and
 skip any section for a part you never did.
 
-> **Order matters.** Deployments and catalog entries (Parts 3–5) must go before the Runtime
-> and AWS integration they depend on (Part 1): a `Deployment` can't be deleted cleanly once its
-> `Runtime` is gone, and Part 1's cross-account role is what Parts 3–5's deploys assumed to
+> **Order matters.** Deployments and catalog entries (Parts 3–5) and the Gateway binding
+> (Part 6) must go before the Runtime and AWS integration they depend on (Part 1): a `Deployment`
+> can't be deleted cleanly once its `Runtime` is gone, a bound `Runtime` should be unbound before
+> its Gateway disappears, and Part 1's cross-account role is what Parts 3–6 all assumed to
 > exist. If you're only part-way through the series, just run the sections for the parts you
 > completed, in this order.
+
+## If you completed Part 6 (Gateway-Bound Runtime: Policy Enforcement and Tracing)
+
+Run this section before Part 5's below it: `Runtime/agentcore` should be unbound from this lab's
+Gateway before that Gateway disappears out from under it. Order within the section is policy →
+binding → Gateway, the same dependency order the lab itself builds in, unwound.
+
+> Fresh shell? `AR_USER_PREFIX` isn't re-derived anywhere else in this doc until the Part 1
+> section; if you haven't already got it set this session, `export AR_USER_PREFIX="$(whoami)"`
+> first. This lab's Gateway and RuntimeAccessPolicy are named `${AR_USER_PREFIX}-part6-gateway`
+> and `${AR_USER_PREFIX}-part6-rap`.
+
+```bash
+# 1. The policy: delete it first so nothing is still being gated by a rule
+#    that's about to point at an unbound Gateway anyway
+arctl delete runtimeaccesspolicy "${AR_USER_PREFIX}-part6-rap"
+
+# 2. Unbind the Runtime: re-apply with spec.config.gatewayRef omitted
+arctl apply -f - <<EOF
+apiVersion: ar.dev/v1alpha1
+kind: Runtime
+metadata: {name: agentcore}
+spec:
+  type: BedrockAgentCore
+  config:
+    region: "${AWS_REGION}"
+    roleArn: "${AWS_ROLE_ARN}"
+    externalId: "${AWS_EXTERNAL_ID}"
+EOF
+
+# 3. Delete the Gateway
+arctl delete gateway "${AR_USER_PREFIX}-part6-gateway"
+```
+
+Two states you'll see here are expected, not failures:
+
+- **`AgentEgressReady: False`, `reason: GatewayRefRemoved`** on `Runtime/agentcore` the moment
+  step 2 lands. This is the registry correctly reporting that any RAP destinations bound through
+  this Gateway are now unreachable until you redeploy or rebind, not a bug.
+- **A stale `lastForceToken` on the RAP's former target Deployment** (e.g. `fred-incluster-agw`,
+  if you pointed the lab's `RuntimeAccessPolicy` at it). Deleting the RAP does not clear
+  `status.details.deploymentController.lastForceToken` on the Deployment it referenced: that
+  field is a historical audit marker ("what last forced a reconcile on this object"), not current
+  desired state. It keeps pointing at your deleted RAP's name and token indefinitely, harmlessly,
+  until some other force-reconcile event overwrites it. The Deployment's health
+  (`Ready: True`, `DeployedViaAgentgateway`) is unaffected throughout; this residue is not a
+  cleanup failure.
+
+**Optional: remove the AppConfig application.** The steps above delete the Gateway and unbind
+the Runtime, but they don't touch the AWS AppConfig application the registry provisioned when
+you bound the Gateway (Lab Objectives, "Bind `Runtime/agentcore` to the Gateway"). It's inert
+and free-tier-scale, so leaving it is safe; if you want AWS fully clean, delete its hosted
+configuration versions and configuration profile before the application itself:
+
+```bash
+# Find the application (named ar-<hash>) and its profile
+aws appconfig list-applications --region "${AWS_REGION}"
+aws appconfig list-configuration-profiles --application-id <app-id> --region "${AWS_REGION}"
+
+# Delete every hosted configuration version first: AppConfig refuses to delete
+# a profile (and a profile blocks deleting the application) while versions remain
+aws appconfig list-hosted-configuration-versions \
+  --application-id <app-id> --configuration-profile-id <profile-id> \
+  --region "${AWS_REGION}" --query 'Items[].VersionNumber' --output text | \
+  tr '\t' '\n' | xargs -I{} aws appconfig delete-hosted-configuration-version \
+  --application-id <app-id> --configuration-profile-id <profile-id> \
+  --version-number {} --region "${AWS_REGION}"
+
+# Then the profile, then the application
+aws appconfig delete-configuration-profile --application-id <app-id> \
+  --configuration-profile-id <profile-id> --region "${AWS_REGION}"
+aws appconfig delete-application --application-id <app-id> --region "${AWS_REGION}"
+```
 
 ## If you completed Part 5 (Route LLM and Registry-Managed MCP Through Agentgateway)
 

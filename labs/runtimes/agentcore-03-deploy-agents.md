@@ -1,11 +1,12 @@
 # Register and Deploy Agents to AgentCore
 
-> **AWS Bedrock AgentCore series, Part 3 of 5**
+> **AWS Bedrock AgentCore series, Part 3 of 6**
 > [Part 1: Integrate Agentregistry and AgentCore](agentcore-01-integration.md) ·
 > [Part 2: Create Agents](agentcore-02-create-agents.md) ·
 > **Part 3: Register and Deploy Agents to AgentCore** (this lab) ·
 > [Part 4: Approval-Gated Agent Onboarding](agentcore-04-approval-onboarding.md) ·
 > [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](agentcore-05-agentgateway-llm-mcp.md) ·
+> [Part 6: Gateway-Bound Runtime: Policy Enforcement and Tracing](agentcore-06-gateway-policy-tracing.md) ·
 > [Cleanup](agentcore-cleanup.md)
 
 Publish the **`econresearch`** agent to the catalog and deploy it to the `agentcore` Runtime you
