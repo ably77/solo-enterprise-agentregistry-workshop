@@ -1,0 +1,18 @@
+apiVersion: ar.dev/v1alpha1
+kind: Plugin
+metadata:
+  name: workshop-toolkit
+  tag: "1.0.0"
+spec:
+  title: Workshop Toolkit
+  description: The workshop's changelog and field-rfe skills bundled as one governed Claude Code plugin.
+  harnesses: [claude-code]
+  # The plugin's content (.claude-plugin/plugin.json + skills/) lives in a source repo; the
+  # catalog stores a reference to it. The controller clones and resolves it on apply.
+  source:
+    type: git
+    git:
+      repository:
+        url: "https://github.com/ably77/solo-enterprise-agentregistry-workshop"
+        branch: main
+        subfolder: "assets/plugins/workshop-toolkit"
