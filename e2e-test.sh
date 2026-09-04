@@ -432,7 +432,7 @@ mcp_tools() {
     -d '{"jsonrpc":"2.0","method":"notifications/initialized"}' "$url"
   curl -s -X POST -H "Accept: application/json, text/event-stream" -H "Content-Type: application/json" \
     -H "mcp-session-id: ${sid}" -H "MCP-Protocol-Version: 2025-06-18" \
-    -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' "$url" | sed 's/^data: //' | jq -r '.result.tools[].name' 2>/dev/null
+    -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' "$url" | sed 's/^data: //' | jq -Rr 'fromjson? | .result.tools[]?.name // empty' 2>/dev/null
 }
 
 # mcp_call <url> <sid> <json-params> -> first content text
@@ -441,7 +441,7 @@ mcp_call() {
   curl -s -X POST -H "Accept: application/json, text/event-stream" -H "Content-Type: application/json" \
     -H "mcp-session-id: ${sid}" -H "MCP-Protocol-Version: 2025-06-18" \
     -d "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\",\"params\":${params}}" "$url" \
-    | sed 's/^data: //' | jq -r '.result.content[0].text' 2>/dev/null
+    | sed 's/^data: //' | jq -Rr 'fromjson? | .result.content[0].text // empty' 2>/dev/null
 }
 
 # wait for a gateway-fronted MCP path to answer initialize with a session id

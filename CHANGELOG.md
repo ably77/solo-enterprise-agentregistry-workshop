@@ -1,6 +1,6 @@
 # Changelog
 
-0.1.8 - (8-27-26)
+0.1.8 - (9-4-26)
 ---
 - New lab `labs/catalog/plugin-marketplace.md`: publish the two workshop skills as a governed `Plugin` and serve the catalog as a Claude Code marketplace
 - New plugin bundle `assets/plugins/workshop-toolkit/` with its `plugin.yaml` catalog manifest
