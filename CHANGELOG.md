@@ -1,5 +1,18 @@
 # Changelog
 
+0.1.8 - (9-4-26)
+---
+- New lab `labs/catalog/plugin-marketplace.md`: publish the two workshop skills as a governed `Plugin` and serve the catalog as a Claude Code marketplace
+- New plugin bundle `assets/plugins/workshop-toolkit/` with its `plugin.yaml` catalog manifest
+- **`v2026.8.0` release-notes discrepancy**: the marketplace enable flag needs the `AGENT_REGISTRY_` env prefix (bare name is silently ignored)
+- **`v2026.8.0` product bug** (reported): the marketplace feed is always empty (route skips auth middleware), so the install step ships behind a known-issue callout
+- New e2e module `lab_plugin_marketplace` in `e2e-test.sh`, with feed-content assertions soft-skipped until the empty-feed bug is fixed
+- `.gitignore`: ignore `/PARKING-LOT.md` (internal working notes)
+- New lab `labs/runtimes/agentcore-06-gateway-policy-tracing.md` (Part 6): registry-managed `Gateway`, `gatewayRef` binding, `RuntimeAccessPolicy`/`GatewayOnly`, and tracing (enforcement/trace payoffs need a cluster AWS can reach; no e2e module yet)
+- **`v2026.8.0` release-notes discrepancy**: no `OTEL_EXPORTER_OTLP_*` env injection; tracing rides the AppConfig egress redirect to the Gateway's `otlp-http` listener
+- `agentcore-cleanup.md`: new Part 6 teardown section in dependency order
+- `README.md`: plugin-marketplace lab entries added and the AgentCore series updated to six parts (breadcrumbs updated across all six lab files)
+
 0.1.7 - (8-26-26)
 ---
 - Upgrade to Agentregistry Enterprise + `arctl` `v2026.8.0` (chart `2026.8.0`) across the install lab, air-gap lab, image/mirror lists, and `e2e-test.sh`

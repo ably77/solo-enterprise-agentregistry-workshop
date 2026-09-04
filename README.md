@@ -20,6 +20,7 @@ you'll have:
 - Fronted those MCP servers with Enterprise Agentgateway behind a single endpoint, with many backends at distinct paths
 - Managed versioned `Prompt` catalog assets independently of agents
 - Published versioned `Skill` catalog assets with `arctl init`/`apply`, shipped a second tag, and pulled them as a consumer
+- Bundled two skills into a governed `Plugin` catalog asset, and registered the catalog's marketplace feed with `claude plugin marketplace add` (feed lists no plugins yet in v2026.8.0, a known issue)
 - Registered **AWS Bedrock AgentCore** as a cloud `Runtime` and deployed a Bedrock Claude-backed economic research agent to it straight from the catalog
 - Locked the catalog down with `AccessPolicy` RBAC and gated submissions behind admin approval workflows
 
@@ -66,17 +67,19 @@ you'll have:
 - [Prompts](labs/catalog/prompts.md): `Prompt` CRUD via `arctl` (~5 min)
 - [Field RFE Skill](labs/catalog/field-rfe-skill.md): scaffold a skill with `arctl init skill`, then publish a versioned `Skill` to the catalog with `arctl apply` and ship a second tag (no agent attach) (~8 min)
 - [Changelog Skill](labs/catalog/changelog-skill.md): the same skill flow with the `/changelog` skill: publish, version, and `arctl pull` it as a consumer (~8 min)
+- [Plugin + Claude Code Marketplace](labs/catalog/plugin-marketplace.md): bundle the two workshop skills into a governed `Plugin`, publish it, then serve the Plugin catalog as a Claude Code marketplace feed and register it with `claude plugin marketplace add` (feed lists no plugins yet in v2026.8.0, a known issue) (~15 min)
 
 ## Agent Runtimes
 
-A five-part **AWS Bedrock AgentCore** series (requires an AWS account you can administer):
+A six-part **AWS Bedrock AgentCore** series (requires an AWS account you can administer):
 
 - [Part 1: Integrate Agentregistry and AgentCore](labs/runtimes/agentcore-01-integration.md): build the AWS side from zero (CLI, operator auth, Bedrock model availability), grant the registry AWS access, generate the cross-account IAM role via `arctl runtime setup` + CloudFormation, and register the `agentcore` Runtime
 - [Part 2: Create Agents](labs/runtimes/agentcore-02-create-agents.md): how the four vertical-use-case agents were built: the `arctl init agent` ADK/Bedrock scaffold, one customized `agent.py` (snapshot data + function tools + grounding instruction), and the Git-sourced catalog entry. All four are already checked in under `assets/agents/` (no AWS needed)
 - [Part 3: Register and Deploy Agents to AgentCore](labs/runtimes/agentcore-03-deploy-agents.md): publish the workshop's governed [`Model`](assets/models/default.yaml) (Bedrock Claude, referenced by every deploy via `modelRef`) and `econresearch` (an economic research agent) to the catalog, deploy it to AgentCore, chat from the UI and tail CloudWatch, then deploy [`claimsupport`](assets/agents/claimsupport/) and [`bankingsupport`](assets/agents/bankingsupport/) the same way
 - [Part 4: Approval-Gated Agent Onboarding](labs/runtimes/agentcore-04-approval-onboarding.md): onboard the fourth agent, [`ithelpdesk`](assets/agents/ithelpdesk/), the governed way: `requireCreateApproval` on, submitted by the non-admin `reader`, staged in the Administrative Requests queue (deploys are blocked until an admin approves), then deployed to AgentCore
 - [Part 5: Route LLM and Registry-Managed MCP Through Agentgateway](labs/runtimes/agentcore-05-agentgateway-llm-mcp.md): extend `econresearch` into [`econresearch-agw`](assets/agents/econresearch-agw/): OpenAI (`gpt-5.4-nano`) LLM calls through an Agentgateway `/openai` route (key held in a k8s Secret at the gateway) and live FRED data via the FRED MCP server at `/registry/fred`, both planes on one gateway (requires a publicly reachable gateway LB)
-- [Cleanup](labs/runtimes/agentcore-cleanup.md): consolidated teardown for all five parts, in dependency order (deployments/catalog entries first, the AWS/IAM integration last)
+- [Part 6: Gateway-Bound Runtime: Policy Enforcement and Tracing](labs/runtimes/agentcore-06-gateway-policy-tracing.md): create a registry-managed `Gateway` (`mode: discover`), bind `Runtime/agentcore` to it via `spec.config.gatewayRef` (a live AWS AppConfig egress switch, no redeploy), author a `RuntimeAccessPolicy` gating a deployment behind it, and inspect the built-in tracing pipeline it unlocks. Like Part 5, the full enforcement-denial and trace-arrival experience needs a cluster whose gateway AWS can reach; this lab teaches the mechanics with live-verified transcripts either way
+- [Cleanup](labs/runtimes/agentcore-cleanup.md): consolidated teardown for all six parts, in dependency order (deployments/catalog entries first, the AWS/IAM integration last)
 
 ## Access Control
 
@@ -94,7 +97,9 @@ A five-part **AWS Bedrock AgentCore** series (requires an AWS account you can ad
 - Expose remote and in-cluster MCP servers through Enterprise Agentgateway via a `Virtual` runtime: one gateway endpoint, many backends at distinct paths, with gateway-managed TLS to the upstream
 - Manage versioned `Prompt` catalog assets independently of agents
 - Publish versioned `Skill` catalog assets (`arctl init`/`apply`), ship a second tag, and `arctl pull` them as a consumer
+- Bundle skills into a governed `Plugin` catalog asset and serve the catalog as a Claude Code marketplace feed (feed lists no plugins yet in v2026.8.0, a known issue)
 - Register AWS Bedrock AgentCore as a cloud `Runtime` and deploy catalog `Agent`s to it: registry-built image from Git source, verified in the UI and CloudWatch; four example agents ship in the catalog (`econresearch`, `claimsupport`, `bankingsupport`, `ithelpdesk`) covering FSI research, insurance, banking, and IT helpdesk use cases
+- Bind an AgentCore `Runtime` to a registry-managed `Gateway` (`spec.config.gatewayRef`) and gate its reachable deployments behind a `RuntimeAccessPolicy` (`inboundAccess: GatewayOnly` + a `mcpTools` allowlist), with tracing riding the same bound connection into the built-in collector
 - Enforce catalog RBAC with `AccessPolicy` against Keycloak group names
 - Gate catalog submissions behind admin approval and approve/reject via the `/v0/approve` API, including an AgentCore agent's onboarding, where the staged agent is blocked from deploying until approved
 
@@ -121,14 +126,16 @@ fe-enterprise-agentregistry-workshop/
 │   ├── catalog/
 │   │   ├── prompts.md
 │   │   ├── field-rfe-skill.md         # Skill catalog asset (field-rfe example)
-│   │   └── changelog-skill.md         # Skill catalog asset (/changelog example)
+│   │   ├── changelog-skill.md         # Skill catalog asset (/changelog example)
+│   │   └── plugin-marketplace.md      # Plugin catalog asset + Claude Code marketplace feed (known issue)
 │   ├── runtimes/
 │   │   ├── agentcore-01-integration.md   # wire the registry to AWS + register the Runtime
 │   │   ├── agentcore-02-create-agents.md # how the ADK/Bedrock example agents were built
 │   │   ├── agentcore-03-deploy-agents.md # publish + deploy to AgentCore, chat, CloudWatch
 │   │   ├── agentcore-04-approval-onboarding.md  # onboard ithelpdesk through the approval queue
 │   │   ├── agentcore-05-agentgateway-llm-mcp.md # LLM + FRED MCP through Agentgateway
-│   │   └── agentcore-cleanup.md          # consolidated teardown for all five parts
+│   │   ├── agentcore-06-gateway-policy-tracing.md # registry-managed Gateway, RAP enforcement, tracing
+│   │   └── agentcore-cleanup.md          # consolidated teardown for all six parts
 │   └── access-control/
 │       ├── access-policies.md
 │       ├── approval-workflows.md
@@ -137,6 +144,8 @@ fe-enterprise-agentregistry-workshop/
 │   ├── keycloak/                        # kustomize stack: deployment + agentregistry-enterprise.json (--import-realm)
 │   ├── prompts/                         # Prompt manifest
 │   ├── skills/                          # field-rfe + changelog SKILL.md (publishable skill sources)
+│   ├── plugins/
+│   │   └── workshop-toolkit/            # Claude Code plugin bundle (changelog + field-rfe skills) + Plugin catalog manifest
 │   ├── models/                          # default.yaml: the governed Bedrock Claude Model (deploys reference it via modelRef)
 │   ├── agents/                          # four ADK/Bedrock example agents (Git source):
 │   │   └── ...                          #   econresearch, claimsupport, bankingsupport, ithelpdesk

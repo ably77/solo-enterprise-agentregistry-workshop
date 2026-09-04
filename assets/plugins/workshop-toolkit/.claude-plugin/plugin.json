@@ -1,0 +1,6 @@
+{
+  "name": "workshop-toolkit",
+  "description": "Workshop toolkit: the changelog and field-rfe skills as one governed plugin.",
+  "version": "1.0.0",
+  "author": { "name": "Agentregistry Workshop" }
+}
